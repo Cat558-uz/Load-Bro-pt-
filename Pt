@@ -325,7 +325,7 @@ ServerTab.Content.Visible = true
 
 ServerTab.AddSection("functions")
 
-ServerTab.AddButton("Destroy stats", function()
+ServerTab.AddButton("destruir Tabela de status", function()
 -- script create BY ghost
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
@@ -370,7 +370,7 @@ playerGui.ChildAdded:Connect(function(c)
 end)
 end)
 
-ServerTab.AddButton("Reset", function()
+ServerTab.AddButton("morrer", function()
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
@@ -378,7 +378,7 @@ LocalPlayer.Character.Humanoid.Health = 0
 end
 end)
 
-ServerTab.AddButton("Rejoin", function()
+ServerTab.AddButton("reentrar", function()
 local TeleportService = game:GetService("TeleportService")
 TeleportService:Teleport(game.PlaceId)
 end)
@@ -437,7 +437,7 @@ local function disableAllHighlights()
     highlights = {}
 end
 
-HomerTab.AddToggle("View Hitbox Players", false, function(state)
+HomerTab.AddToggle("ver Hitbox dos jogadores", false, function(state)
     viewBodyActive = state
     if state then
         enableLoop()
@@ -517,7 +517,7 @@ table.insert(enemies, p)
 end
 end
 end
-if #enemies == 0 then notify("System","No enemies found.") return end
+if #enemies == 0 then notify("System","nenhum Bart Achado.") return end
 
 local target = enemies[math.random(1,#enemies)]
 local myChar = LocalPlayer.Character
@@ -590,7 +590,7 @@ LocalPlayer.CharacterAdded:Connect(function()
 end)
 
 -- Toggle na aba Homer
-HomerTab.AddToggle("Homer Pulls / ant Homer ", false, function(v)
+HomerTab.AddToggle("anti Homer ", false, function(v)
 	homerPushActive = v
 end)
 
@@ -602,7 +602,7 @@ local LocalPlayer = Players.LocalPlayer
 local espActive = false
 
 --== TOGGLE UI ==--
-HomerTab.AddToggle("ver todos / esp / Fix", true, function(val)
+HomerTab.AddToggle("ver todos / esp", true, function(val)
 	espActive = val
 end)
 
@@ -753,9 +753,9 @@ Players.PlayerRemoving:Connect(removeESP)
 
 RunService.RenderStepped:Connect(updateESP)
 
-HomerTab.AddButton("Fake Ritual / ritual falso (Use the Homer)", function()
+HomerTab.AddButton(" ritual falso (Usar o Homer)", function()
 
-notify("System", "wait!!", 1)
+notify("System", "preparando tudo!!", 1)
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -811,7 +811,7 @@ end)
 
 -- script create BY ghost
 
-HomerTab.AddToggle("X Ray", false, function(state)
+HomerTab.AddToggle("X Ray / visao Raio x", false, function(state)
     task.spawn(function()
         local lpChar = game.Players.LocalPlayer.Character
         local parts = workspace:GetDescendants()
@@ -834,13 +834,13 @@ HomerTab.AddToggle("X Ray", false, function(state)
     end)
 end)
 
-HomerTab.AddSection("Attac / Ataque")
+HomerTab.AddSection(" Ataque")
 
-HomerTab.AddButton("kill all / mata todos", killAll)
+HomerTab.AddButton("mata todos", killAll)
 
-HomerTab.AddButton("kill Random / mata aleatorio", killRandom)
+HomerTab.AddButton("mata aleatorio", killRandom)
 
-HomerTab.AddToggle("kill auto / mata automatico", false, function(val)
+HomerTab.AddToggle(" mata automatico", false, function(val)
 autoKill = val
 if val then autoKillLoop() end
 end)
@@ -852,7 +852,7 @@ local BartTab = createTab("Bart")
 
 
 
-BartTab.AddButton("dash // ir para frente", function()
+BartTab.AddButton("dash / ir para frente", function()
 
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
@@ -935,7 +935,7 @@ local LocalPlayer = Players.LocalPlayer
 local infinityJump = false
 local tptoolEquipped = false
 
-BartTab.AddToggle("Infinity Jump / pulo infinito ", false, function(val)
+BartTab.AddToggle(" pulo infinito ", false, function(val)
 	infinityJump = val
 end)
 
@@ -958,17 +958,17 @@ if LocalPlayer.Character then
 	setupJump()
 end
 
-BartTab.AddButton("Give TP Tool", function()
+BartTab.AddButton("pegar TP Tool", function()
 
 notify("system", "bypass....")
 wait(1)
-notify("Sucesse", ".check your inventory")
+notify("Sucesse", ".de uma olhada no inventario")
 
 if tptoolEquipped then return end
 tptoolEquipped = true
 
 local tool = Instance.new("Tool")
-tool.Name = "TPTool | ferramenta teleport"
+tool.Name = "ferramenta teleport"
 tool.RequiresHandle = false
 tool.Parent = LocalPlayer.Backpack
 
@@ -988,7 +988,7 @@ local LocalPlayer = Players.LocalPlayer
 
 local infinityJump = false
 
-BartTab.AddToggle("Infinity Jump / wallhop", false, function(val)
+BartTab.AddToggle("pulo infinito para wallhop", false, function(val)
 infinityJump = val
 end)
 
@@ -1010,7 +1010,7 @@ end)
 
 
 
-BartTab.AddButton("flick legit Mobile", function()
+BartTab.AddButton("flick tela legitimo Mobile", function()
 
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
@@ -1111,7 +1111,7 @@ LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(12, 104, -10)
 end
 end)
 
-BartTab.AddToggle("voar/ Float", false, function(state)
+BartTab.AddToggle("flutuar", false, function(state)
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
@@ -1155,7 +1155,7 @@ local Lighting = game:GetService("Lighting")
 local active = false
 local originalSettings = nil -- Variável para guardar o estado original do mapa
 
-BartTab.AddToggle("Full Bright", false, function(state)
+BartTab.AddToggle("fullbright / brilho", false, function(state)
     active = state
 
     if active then
@@ -1199,11 +1199,11 @@ end)
 
 
 
-BartTab.AddSection("Troll / bypass")
+BartTab.AddSection("Trolagems")
 
 
 
-BartTab.AddButton("Make Sound Obby ALL", function()
+BartTab.AddButton("fazer som Obby ", function()
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local char = LocalPlayer.Character
@@ -1222,7 +1222,7 @@ end)
 local spamEnabled = false
 local spamThread
 
-BartTab.AddToggle("Spam tacos Sound", false, function(state)
+BartTab.AddToggle("spam Tacos", false, function(state)
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 spamEnabled = state
@@ -1258,7 +1258,7 @@ end)
 local spamEnabled = false
 local spamThread
 
-BartTab.AddToggle("Spam Pizza Sound", false, function(state)
+BartTab.AddToggle("Spam Pizza ", false, function(state)
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 spamEnabled = state
@@ -1291,7 +1291,7 @@ end
 
 end)
 
-BartTab.AddButton("Make all machines ", function()
+BartTab.AddButton("Ativar toda as maquinas ", function()
 
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
@@ -1429,7 +1429,7 @@ end
 
 end)
 
-BartTab.AddSection("tp walk")
+BartTab.AddSection("tp walk | speed")
 
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
@@ -1493,7 +1493,7 @@ local FarmTab = createTab("Farm")
 
 FarmTab.AddSection("Farming V2")
 
-FarmTab.AddToggle("Automatic TP Kill | Homer", false, function(val)
+FarmTab.AddToggle("Automatic TP matar | Homer", false, function(val)
 autoKill = val
 if val then autoKillLoop() end
 end)
@@ -1625,28 +1625,28 @@ TpTab.AddButton("Tp to an Homer", function()
     end
 end)
 
-TpTab.AddButton("spoot Simpsons", function()
+TpTab.AddButton("esconderijo Simpsons", function()
 local pl = game.Players.LocalPlayer
 if pl.Character and pl.Character:FindFirstChild("HumanoidRootPart") then
 	pl.Character:MoveTo(Vector3.new(47, -60, -97))
 end
 end)
 
-TpTab.AddButton("spoot Simpsons", function()
+TpTab.AddButton("esconderijo 2 Simpsons", function()
 local pl = game.Players.LocalPlayer
 if pl.Character and pl.Character:FindFirstChild("HumanoidRootPart") then
 	pl.Character:MoveTo(Vector3.new(73, -80, -1))
 end
 end)
 
-TpTab.AddButton("spoot island bar", function()
+TpTab.AddButton("esconderijo island bar", function()
 local pl = game.Players.LocalPlayer
 if pl.Character and pl.Character:FindFirstChild("HumanoidRootPart") then
 	pl.Character:MoveTo(Vector3.new(-48, -114, -42))
 end
 end)
 
-TpTab.AddButton("spoot Island bar", function()
+TpTab.AddButton("esconderijo 2 Island bar", function()
 local pl = game.Players.LocalPlayer
 if pl.Character and pl.Character:FindFirstChild("HumanoidRootPart") then
 	pl.Character:MoveTo(Vector3.new(54, -55, -57))
@@ -1657,7 +1657,7 @@ local ConfigTab = createTab("Config")
 
 ConfigTab.AddSection("system")
 
-ConfigTab.AddButton("View FPS", function()
+ConfigTab.AddButton("ver FPS", function()
 local RunService = game:GetService("RunService")
 local fps = math.floor(1 / RunService.RenderStepped:Wait())
 notify("System", "FPS: " .. fps, 3)
@@ -1666,7 +1666,7 @@ end)
 
 ConfigTab.AddSection("game States")
 
-ConfigTab.AddToggle("View FPS Game and MS", false, function(state)
+ConfigTab.AddToggle("ver FPS jogo e MS", false, function(state)
 local RunService = game:GetService("RunService")
 local CoreGui = game:GetService("CoreGui")
 local UserInputService = game:GetService("UserInputService")
@@ -1816,7 +1816,7 @@ end
 highlights = {}
 end
 
-ConfigTab.AddToggle("View Body", false, function(state)
+ConfigTab.AddToggle("ver corpo seu", false, function(state)
 viewBodyActive = state
 if state then
 enableViewBody()
@@ -2058,7 +2058,7 @@ end
 end)
 
 
-ConfigTab.AddButton("destroy GUI", function() ScreenGui:Destroy() end)
+ConfigTab.AddButton("destroy a interface", function() ScreenGui:Destroy() end)
 
 
 local ScriptTab = createTab("Script")
@@ -2085,7 +2085,7 @@ loadstring(game:HttpGet("https://rawscripts.net/raw/UPD-You-VS-Homer-Onionware-8
 
 end)
 
-ScriptTab.AddButton("bartender good", function()
+ScriptTab.AddButton("bartender bom script", function()
 
 loadstring(game:HttpGet("https://rawscripts.net/raw/You-VS-Homer-Bartender-78034"))()
 
@@ -2095,7 +2095,7 @@ local sugestaoTab = createTab("sugestions")
 
 
 
-sugestaoTab.AddButton("carregar sugestao ", function()
+sugestaoTab.AddButton("carregar sugestões ", function()
 
 loadstring(game:HttpGet("https://raw.githubusercontent.com/Cat558-uz/Ed-Sugestion/refs/heads/main/sugestao.lua.obfuscated.lua.txt"))()
 
