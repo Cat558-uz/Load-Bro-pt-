@@ -387,6 +387,188 @@ end)
 
 local HomerTab = createTab("Homer")
 
+--== VARIÁVEIS ==--
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local LocalPlayer = Players.LocalPlayer
+
+local espActive = false
+local espMode = "ALL" -- Modo inicial
+
+--== BOTÃO DE MODO ==--
+HomerTab.AddButton("change mode", function(btn)
+	if espMode == "ALL" then
+		espMode = "Bart"
+		notify("esp config", "Bart team only", 1)
+	elseif espMode == "Bart" then
+		espMode = "Homer"
+		notify("esp config", "Homer team only", 1)
+	elseif espMode == "Homer" then
+		espMode = "ALL"
+		notify("esp config", "All players", 1)
+	end
+end)
+
+--== TOGGLE UI ==--
+HomerTab.AddToggle("ver todos / esp", true, function(val)
+	espActive = val
+end)
+
+--== FUNÇÃO: COR DO TIME ==--
+local function getTeamColor(p)
+	if p.Team and p.Team.TeamColor then
+		return p.Team.TeamColor.Color
+	end
+	return Color3.fromRGB(255, 255, 255)
+end
+
+--== FUNÇÃO: CRIAR ESP ==--
+local function createESP(p)
+	if not p.Character or not p.Character:FindFirstChild("HumanoidRootPart") then return end
+
+	local char = p.Character
+	local hrp = char:FindFirstChild("HumanoidRootPart")
+
+	local highlight = Instance.new("Highlight")
+	highlight.Name = "AuraLine"
+	highlight.FillTransparency = 1
+	highlight.OutlineTransparency = 0.2
+	highlight.OutlineColor = getTeamColor(p)
+	highlight.Parent = char
+
+	local billboard = Instance.new("BillboardGui")
+	billboard.Name = "NameTag"
+	billboard.AlwaysOnTop = true
+	billboard.Size = UDim2.new(0, 200, 0, 40)
+	billboard.StudsOffset = Vector3.new(0, 3, 0)
+	billboard.MaxDistance = 250
+	billboard.Parent = hrp
+
+	local nameLabel = Instance.new("TextLabel")
+	nameLabel.Name = "NameLabel"
+	nameLabel.BackgroundTransparency = 1
+	nameLabel.Size = UDim2.new(1, 0, 0.5, 0)
+	nameLabel.Position = UDim2.new(0, 0, 0, 0)
+	nameLabel.Text = p.DisplayName or p.Name
+	nameLabel.TextColor3 = getTeamColor(p)
+	nameLabel.TextStrokeTransparency = 0.5
+	nameLabel.Font = Enum.Font.SourceSansBold
+	nameLabel.TextSize = 14
+	nameLabel.Parent = billboard
+
+	local distLabel = Instance.new("TextLabel")
+	distLabel.Name = "DistLabel"
+	distLabel.BackgroundTransparency = 1
+	distLabel.Size = UDim2.new(1, 0, 0.5, 0)
+	distLabel.Position = UDim2.new(0, 0, 0.5, 0)
+	distLabel.Text = ""
+	distLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+	distLabel.TextStrokeTransparency = 0.5
+	distLabel.Font = Enum.Font.SourceSans
+	distLabel.TextSize = 13
+	distLabel.Parent = billboard
+end
+
+--== REMOVER ESP ==--
+local function removeESP(p)
+	if p.Character then
+		local h = p.Character:FindFirstChild("AuraLine")
+		if h then h:Destroy() end
+		local hrp = p.Character:FindFirstChild("HumanoidRootPart")
+		if hrp and hrp:FindFirstChild("NameTag") then
+			hrp.NameTag:Destroy()
+		end
+	end
+end
+
+--== ATUALIZAR ESP ==--
+local function updateESP()
+	for _, p in ipairs(Players:GetPlayers()) do
+		if p ~= LocalPlayer then
+			-- Verifica o modo atual por time
+			if espMode == "Bart" then
+				if not (p.Team and p.Team.Name == "Bart") then
+					removeESP(p)
+					continue
+				end
+			elseif espMode == "Homer" then
+				if not (p.Team and p.Team.Name == "Homer") then
+					removeESP(p)
+					continue
+				end
+			end
+
+			if espActive and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+				local hrp = p.Character.HumanoidRootPart
+				local highlight = p.Character:FindFirstChild("AuraLine")
+
+				if not highlight then
+					createESP(p)
+				end
+
+				local color = getTeamColor(p)
+				if highlight then
+					highlight.OutlineColor = color
+				end
+
+				local billboard = hrp:FindFirstChild("NameTag")
+				if billboard then
+					local nameLabel = billboard:FindFirstChild("NameLabel")
+					local distLabel = billboard:FindFirstChild("DistLabel")
+
+					if nameLabel then
+						nameLabel.Text = p.DisplayName or p.Name
+						nameLabel.TextColor3 = color
+					end
+
+					local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+					if distLabel and root then
+						local dist = (root.Position - hrp.Position).Magnitude
+						distLabel.Text = string.format("[%d Studs]", dist)
+					end
+				end
+			elseif not espActive then
+				removeESP(p)
+			end
+		end
+	end
+end
+
+--== EVENTOS ==--
+local function onCharacterAdded(p, char)
+	task.wait(0.3)
+	if espActive then
+		createESP(p)
+	end
+end
+
+local function setupPlayer(p)
+	p.CharacterAdded:Connect(function(char)
+		onCharacterAdded(p, char)
+	end)
+
+	p:GetPropertyChangedSignal("Team"):Connect(function()
+		if p.Character then
+			removeESP(p)
+			if espActive then
+				createESP(p)
+			end
+		end
+	end)
+end
+
+for _, p in ipairs(Players:GetPlayers()) do
+	if p ~= LocalPlayer then
+		setupPlayer(p)
+	end
+end
+
+Players.PlayerAdded:Connect(setupPlayer)
+Players.PlayerRemoving:Connect(removeESP)
+RunService.RenderStepped:Connect(updateESP)
+
+
+HomerTab.AddSection(" outros")
 
 --// VIEW HITBOX ALL PLAYERS (AUTO UPDATE)
 local Players = game:GetService("Players")
@@ -594,164 +776,6 @@ HomerTab.AddToggle("anti Homer ", false, function(v)
 	homerPushActive = v
 end)
 
---== VARIÁVEIS ==--
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local LocalPlayer = Players.LocalPlayer
-
-local espActive = false
-
---== TOGGLE UI ==--
-HomerTab.AddToggle("ver todos / esp", true, function(val)
-	espActive = val
-end)
-
---== FUNÇÃO: COR DO TIME ==--
-local function getTeamColor(p)
-	if p.Team and p.Team.TeamColor then
-		return p.Team.TeamColor.Color
-	end
-	return Color3.fromRGB(255, 255, 255)
-end
-
---== FUNÇÃO: CRIAR ESP ==--
-local function createESP(p)
-	if not p.Character or not p.Character:FindFirstChild("HumanoidRootPart") then return end
-
-	local char = p.Character
-	local hrp = char:FindFirstChild("HumanoidRootPart")
-
-	-- Highlight
-	local highlight = Instance.new("Highlight")
-	highlight.Name = "AuraLine"
-	highlight.FillTransparency = 1
-	highlight.OutlineTransparency = 0.2
-	highlight.OutlineColor = getTeamColor(p)
-	highlight.Parent = char
-
-	-- Billboard com nome + distância
-	local billboard = Instance.new("BillboardGui")
-	billboard.Name = "NameTag"
-	billboard.AlwaysOnTop = true
-	billboard.Size = UDim2.new(0, 200, 0, 40)
-	billboard.StudsOffset = Vector3.new(0, 3, 0)
-	billboard.MaxDistance = 250
-	billboard.Parent = hrp
-
-	local nameLabel = Instance.new("TextLabel")
-	nameLabel.Name = "NameLabel"
-	nameLabel.BackgroundTransparency = 1
-	nameLabel.Size = UDim2.new(1, 0, 0.5, 0)
-	nameLabel.Position = UDim2.new(0, 0, 0, 0)
-	nameLabel.Text = p.DisplayName or p.Name
-	nameLabel.TextColor3 = getTeamColor(p)
-	nameLabel.TextStrokeTransparency = 0.5
-	nameLabel.Font = Enum.Font.SourceSansBold
-	nameLabel.TextSize = 14
-	nameLabel.Parent = billboard
-
-	local distLabel = Instance.new("TextLabel")
-	distLabel.Name = "DistLabel"
-	distLabel.BackgroundTransparency = 1
-	distLabel.Size = UDim2.new(1, 0, 0.5, 0)
-	distLabel.Position = UDim2.new(0, 0, 0.5, 0)
-	distLabel.Text = ""
-	distLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
-	distLabel.TextStrokeTransparency = 0.5
-	distLabel.Font = Enum.Font.SourceSans
-	distLabel.TextSize = 13
-	distLabel.Parent = billboard
-end
-
---== REMOVER ESP ==--
-local function removeESP(p)
-	if p.Character then
-		local h = p.Character:FindFirstChild("AuraLine")
-		if h then h:Destroy() end
-		local hrp = p.Character:FindFirstChild("HumanoidRootPart")
-		if hrp and hrp:FindFirstChild("NameTag") then
-			hrp.NameTag:Destroy()
-		end
-	end
-end
-
---== ATUALIZAR ESP ==--
-local function updateESP()
-	for _, p in ipairs(Players:GetPlayers()) do
-		if p ~= LocalPlayer then
-			if espActive and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
-				local hrp = p.Character.HumanoidRootPart
-				local highlight = p.Character:FindFirstChild("AuraLine")
-
-				if not highlight then
-					createESP(p)
-				end
-
-				local color = getTeamColor(p)
-				if highlight then
-					highlight.OutlineColor = color
-				end
-
-				local billboard = hrp:FindFirstChild("NameTag")
-				if billboard then
-					local nameLabel = billboard:FindFirstChild("NameLabel")
-					local distLabel = billboard:FindFirstChild("DistLabel")
-
-					if nameLabel then
-						nameLabel.Text = p.DisplayName or p.Name
-						nameLabel.TextColor3 = color
-					end
-
-					local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-					if distLabel and root then
-						local dist = (root.Position - hrp.Position).Magnitude
-						distLabel.Text = string.format("[%d Studs]", dist)
-					end
-				end
-			elseif not espActive then
-				removeESP(p)
-			end
-		end
-	end
-end
-
---== EVENTOS DE PLAYER ==--
-local function onCharacterAdded(p, char)
-	task.wait(0.3)
-	if espActive then
-		createESP(p)
-	end
-end
-
-local function setupPlayer(p)
-	p.CharacterAdded:Connect(function(char)
-		onCharacterAdded(p, char)
-	end)
-
-	-- Detectar mudança de time e atualizar cor automaticamente
-	p:GetPropertyChangedSignal("Team"):Connect(function()
-		if p.Character then
-			removeESP(p)
-			if espActive then
-				createESP(p)
-			end
-		end
-	end)
-end
-
-for _, p in ipairs(Players:GetPlayers()) do
-	if p ~= LocalPlayer then
-		setupPlayer(p)
-	end
-end
-
-Players.PlayerAdded:Connect(function(p)
-	setupPlayer(p)
-end)
-
-Players.PlayerRemoving:Connect(removeESP)
-
-RunService.RenderStepped:Connect(updateESP)
 
 HomerTab.AddButton(" ritual falso (Usar o Homer)", function()
 
@@ -980,7 +1004,40 @@ end)
 
 local BartTab = createTab("Bart")
 
+BartTab.AddToggle("Noclip ( beta )", false, function(state)
+    task.spawn(function()
+        local Players = game:GetService("Players")
+        local RunService = game:GetService("RunService")
+        local lp = Players.LocalPlayer
+        local noclipEnabled = state
 
+        -- Mantém noclip ativo mesmo ao morrer
+        lp.CharacterAdded:Connect(function(char)
+            if noclipEnabled then
+                task.wait(0.01)
+                for _, v in ipairs(char:GetDescendants()) do
+                    if v:IsA("BasePart") and v.CanCollide then
+                        v.CanCollide = false
+                    end
+                end
+            end
+        end)
+
+        -- Loop principal
+        while noclipEnabled do
+            local char = lp.Character
+            if char then
+                for _, v in ipairs(char:GetDescendants()) do
+                    if v:IsA("BasePart") and v.CanCollide then
+                        v.CanCollide = false
+                    end
+                end
+            end
+            RunService.Stepped:Wait()
+            noclipEnabled = state
+        end
+    end)
+end)
 
 
 BartTab.AddButton("dash / ir para frente", function()
