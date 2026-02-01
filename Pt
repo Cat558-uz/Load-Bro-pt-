@@ -836,6 +836,137 @@ end)
 
 HomerTab.AddSection(" Ataque")
 
+
+
+local Players = game:GetService("Players")
+local PathfindingService = game:GetService("PathfindingService")
+local RunService = game:GetService("RunService")
+
+local LocalPlayer = Players.LocalPlayer
+local Character, Humanoid, Root
+
+local autoFollow = false
+local currentTarget = nil
+local currentPath = nil
+local waypoints = {}
+local currentWaypoint = 1
+
+-- Atualiza personagem
+local function updateCharacter()
+	Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+	Humanoid = Character:WaitForChild("Humanoid")
+	Root = Character:WaitForChild("HumanoidRootPart")
+end
+updateCharacter()
+LocalPlayer.CharacterAdded:Connect(updateCharacter)
+
+-- Cria ponto visual (debug)
+local function createPoint(pos)
+	local p = Instance.new("Part")
+	p.Size = Vector3.new(0.3, 0.3, 0.3)
+	p.Anchored = true
+	p.Material = Enum.Material.Neon
+	p.Color = Color3.fromRGB(255, 255, 0)
+	p.CanCollide = false
+	p.Position = pos + Vector3.new(0, 2, 0)
+	p.Parent = workspace
+	game.Debris:AddItem(p, 1)
+end
+
+-- Encontra o jogador Bart mais próximo
+local function getClosestBart()
+	local nearest, shortest = nil, math.huge
+	for _, plr in ipairs(Players:GetPlayers()) do
+		if plr ~= LocalPlayer and plr.Team and plr.Team.Name == "Bart" then
+			local char = plr.Character
+			local root = char and char:FindFirstChild("HumanoidRootPart")
+			if root then
+				local dist = (root.Position - Root.Position).Magnitude
+				if dist < shortest then
+					shortest = dist
+					nearest = plr
+				end
+			end
+		end
+	end
+	return nearest
+end
+
+-- Gera um novo caminho
+local function generatePath(targetRoot)
+	local path = PathfindingService:CreatePath({
+		AgentRadius = 2,
+		AgentHeight = 5,
+		AgentCanJump = true,
+		AgentMaxSlope = 60 -- permite escadas
+	})
+
+	path:ComputeAsync(Root.Position, targetRoot.Position)
+	if path.Status == Enum.PathStatus.Success then
+		waypoints = path:GetWaypoints()
+		currentWaypoint = 1
+		for _, w in ipairs(waypoints) do
+			createPoint(w.Position)
+		end
+	else
+		waypoints = {}
+	end
+end
+
+-- Detecta se o seguidor encostou no alvo
+local function touchingTarget(targetRoot)
+	if not Root or not targetRoot then return false end
+	return (Root.Position - targetRoot.Position).Magnitude < 4
+end
+
+-- Movimento contínuo
+RunService.Heartbeat:Connect(function()
+	if not autoFollow or not Root or not Humanoid then return end
+
+	if not currentTarget or not currentTarget.Team or currentTarget.Team.Name ~= "Bart" or not currentTarget.Character or not currentTarget.Character:FindFirstChild("HumanoidRootPart") then
+		currentTarget = getClosestBart()
+		if currentTarget and currentTarget.Character then
+			generatePath(currentTarget.Character:FindFirstChild("HumanoidRootPart"))
+		end
+		return
+	end
+
+	local targetRoot = currentTarget.Character:FindFirstChild("HumanoidRootPart")
+	if not targetRoot then return end
+
+	-- Se encostou no alvo, troca
+	if touchingTarget(targetRoot) then
+		currentTarget = getClosestBart()
+		if currentTarget and currentTarget.Character then
+			generatePath(currentTarget.Character:FindFirstChild("HumanoidRootPart"))
+		end
+		return
+	end
+
+	-- Segue os waypoints continuamente
+	if waypoints[currentWaypoint] then
+		local wp = waypoints[currentWaypoint]
+		Humanoid:MoveTo(wp.Position)
+		if (Root.Position - wp.Position).Magnitude < 3 then
+			if wp.Action == Enum.PathWaypointAction.Jump then
+				Humanoid.Jump = true
+			end
+			currentWaypoint += 1
+		end
+	else
+		-- Recalcula caminho quando chega ao fim
+		generatePath(targetRoot)
+	end
+end)
+
+-- Toggle do Hub
+HomerTab.AddToggle("auto achar barts (BETA)", false, function(v)
+	autoFollow = v
+	currentTarget = nil
+	currentPath = nil
+	waypoints = {}
+end)
+
 HomerTab.AddButton("mata todos", killAll)
 
 HomerTab.AddButton("mata aleatorio", killRandom)
