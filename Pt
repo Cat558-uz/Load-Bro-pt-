@@ -124,7 +124,11 @@ notify("System", "carregando Arquivo Npcc", 1)
 wait(1)
 notify("System", "quase la..", 1)
 
---== INTERFACE HAVENS SCRIPT ==--
+
+--== HAVENS SCRIPT HUB COM SISTEMA DE CONFIGURAÇÃO COMPLETO ==--
+
+local TweenService = game:GetService("TweenService")
+local HttpService = game:GetService("HttpService")
 
 local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
 ScreenGui.Name = "HavensScriptHub"
@@ -193,130 +197,218 @@ TabList.FillDirection = Enum.FillDirection.Vertical
 TabList.SortOrder = Enum.SortOrder.LayoutOrder
 TabList.VerticalAlignment = Enum.VerticalAlignment.Top
 
---== Sistema de Criação de Tabs com Scrolling ==--
+--== SISTEMA DE CONFIGURAÇÃO ==--
+
+local configs = {}
+local currentConfig = "default"
+
+local function MakeConfig(name)
+	local folder = "HavensConfigs"
+	if not isfolder(folder) then makefolder(folder) end
+	local path = folder .. "/" .. name .. ".json"
+	writefile(path, HttpService:JSONEncode(configs))
+	notify("sucess", ": " .. name, 1)
+end
+
+local function LoadConfig(name)
+	local path = "HavensConfigs/" .. name .. ".json"
+	if not isfile(path) then
+		notify("System", "file not founded: " .. name, 3)
+		return
+	end
+	local data = HttpService:JSONDecode(readfile(path))
+	configs = data
+	notify("System", "config: loaded " .. name, 3)
+
+	-- aplicar aos toggles e textbox
+	for _, tab in pairs(ContentFrame:GetChildren()) do
+		if tab:IsA("ScrollingFrame") then
+			for _, item in pairs(tab:GetChildren()) do
+				if item:IsA("TextButton") and item:FindFirstChildWhichIsA("UICorner") then
+					local key = item.Name
+					if configs[key] ~= nil then
+						local val = configs[key]
+						if typeof(val) == "boolean" then
+							item.Text = key .. " : " .. (val and "ON" or "OFF")
+							item.BackgroundColor3 = val and Color3.fromRGB(150,0,0) or Color3.fromRGB(90,0,0)
+						end
+					end
+				elseif item:IsA("TextBox") then
+					local key = item.Name
+					if configs[key] ~= nil then
+						item.Text = tostring(configs[key])
+					end
+				end
+			end
+		end
+	end
+end
+
+--== SISTEMA DE CRIAÇÃO DE TABS ==--
 local function createTab(tabName)
-local TabButton = Instance.new("TextButton", TabsFrame)
-TabButton.Size = UDim2.new(1, -10, 0, 30)
-TabButton.Position = UDim2.new(0, 5, 0, 0)
-TabButton.BackgroundColor3 = Color3.fromRGB(50, 0, 0)
-TabButton.Text = tabName
-TabButton.TextColor3 = Color3.new(1, 1, 1)
-TabButton.Font = Enum.Font.SourceSansBold
-TabButton.TextSize = 18
-TabButton.BorderSizePixel = 0
-Instance.new("UICorner", TabButton).CornerRadius = UDim.new(0, 13)
+	local TabButton = Instance.new("TextButton", TabsFrame)
+	TabButton.Size = UDim2.new(1, -10, 0, 30)
+	TabButton.Position = UDim2.new(0, 5, 0, 0)
+	TabButton.BackgroundColor3 = Color3.fromRGB(50, 0, 0)
+	TabButton.Text = tabName
+	TabButton.TextColor3 = Color3.new(1, 1, 1)
+	TabButton.Font = Enum.Font.SourceSansBold
+	TabButton.TextSize = 18
+	TabButton.BorderSizePixel = 0
+	Instance.new("UICorner", TabButton).CornerRadius = UDim.new(0, 13)
 
-local TabContent = Instance.new("ScrollingFrame", ContentFrame)
-TabContent.Size = UDim2.new(1, -10, 1, -10)
-TabContent.Position = UDim2.new(0, 5, 0, 5)
-TabContent.CanvasSize = UDim2.new(0, 0, 0, 0)
-TabContent.ScrollBarThickness = 5
-TabContent.Visible = false
-TabContent.BackgroundTransparency = 1
+	local TabContent = Instance.new("ScrollingFrame", ContentFrame)
+	TabContent.Size = UDim2.new(1, -10, 1, -10)
+	TabContent.Position = UDim2.new(0, 5, 0, 5)
+	TabContent.CanvasSize = UDim2.new(0, 0, 0, 0)
+	TabContent.ScrollBarThickness = 5
+	TabContent.Visible = false
+	TabContent.BackgroundTransparency = 1
 
-local ListLayout = Instance.new("UIListLayout", TabContent)
-ListLayout.Padding = UDim.new(0, 10)
-ListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+	local ListLayout = Instance.new("UIListLayout", TabContent)
+	ListLayout.Padding = UDim.new(0, 10)
+	ListLayout.SortOrder = Enum.SortOrder.LayoutOrder
 
-ListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-	TabContent.CanvasSize = UDim2.new(0, 0, 0, ListLayout.AbsoluteContentSize.Y + 10)
-end)
-
-TabButton.MouseButton1Click:Connect(function()
-	for _, v in pairs(ContentFrame:GetChildren()) do
-		if v:IsA("ScrollingFrame") then
-			v.Visible = false
-		end
-	end
-	for _, v in pairs(TabsFrame:GetChildren()) do
-		if v:IsA("TextButton") then
-			TweenService:Create(v, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(50, 0, 0)}):Play()
-		end
-	end
-	TweenService:Create(TabButton, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(150, 0, 0)}):Play()
-	TabContent.Visible = true
-end)
-
-local function AddSection(name)
-	local Section = Instance.new("TextLabel", TabContent)
-	Section.Size = UDim2.new(1, -10, 0, 25)
-	Section.BackgroundColor3 = Color3.fromRGB(70, 0, 0)
-	Section.Text = "  " .. name
-	Section.TextColor3 = Color3.new(1, 1, 1)
-	Section.Font = Enum.Font.SourceSansBold
-	Section.TextSize = 18
-	Section.TextXAlignment = Enum.TextXAlignment.Left
-	Section.BorderSizePixel = 1
-	Instance.new("UICorner", Section).CornerRadius = UDim.new(0, 8)
-end
-
-local function AddButton(name, callback)
-	local Button = Instance.new("TextButton", TabContent)
-	Button.Size = UDim2.new(1, -10, 0, 30)
-	Button.BackgroundColor3 = Color3.fromRGB(90, 0, 0)
-	Button.Text = name
-	Button.TextColor3 = Color3.new(1, 1, 1)
-	Button.Font = Enum.Font.SourceSans
-	Button.TextSize = 18
-	Button.BorderSizePixel = 0
-	Instance.new("UICorner", Button).CornerRadius = UDim.new(0, 8)
-
-	Button.MouseButton1Click:Connect(function()
-		TweenService:Create(Button, TweenInfo.new(0.1), {BackgroundColor3 = Color3.fromRGB(150, 0, 0)}):Play()
-		task.wait(0.1)
-		TweenService:Create(Button, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(90, 0, 0)}):Play()
-		pcall(callback)
+	ListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+		TabContent.CanvasSize = UDim2.new(0, 0, 0, ListLayout.AbsoluteContentSize.Y + 10)
 	end)
-end
 
-local function AddToggle(name, default, callback)
-	local Toggle = Instance.new("TextButton", TabContent)
-	Toggle.Size = UDim2.new(1, -10, 0, 30)
-	Toggle.BackgroundColor3 = Color3.fromRGB(90, 0, 0)
-	Toggle.TextColor3 = Color3.new(1, 1, 1)
-	Toggle.Font = Enum.Font.SourceSans
-	Toggle.TextSize = 18
-	Toggle.BorderSizePixel = 0
-	Instance.new("UICorner", Toggle).CornerRadius = UDim.new(0, 8)
+	TabButton.MouseButton1Click:Connect(function()
+		for _, v in pairs(ContentFrame:GetChildren()) do
+			if v:IsA("ScrollingFrame") then
+				v.Visible = false
+			end
+		end
+		for _, v in pairs(TabsFrame:GetChildren()) do
+			if v:IsA("TextButton") then
+				TweenService:Create(v, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(50, 0, 0)}):Play()
+			end
+		end
+		TweenService:Create(TabButton, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(150, 0, 0)}):Play()
+		TabContent.Visible = true
+	end)
 
-	local toggled = default
-	Toggle.Text = name .. " : " .. (toggled and "ON" or "OFF")
+	local function AddSection(name)
+		local Section = Instance.new("TextLabel", TabContent)
+		Section.Size = UDim2.new(1, -10, 0, 25)
+		Section.BackgroundColor3 = Color3.fromRGB(70, 0, 0)
+		Section.Text = "  " .. name
+		Section.TextColor3 = Color3.new(1, 1, 1)
+		Section.Font = Enum.Font.SourceSansBold
+		Section.TextSize = 18
+		Section.TextXAlignment = Enum.TextXAlignment.Left
+		Section.BorderSizePixel = 1
+		Instance.new("UICorner", Section).CornerRadius = UDim.new(0, 8)
+	end
 
-	Toggle.MouseButton1Click:Connect(function()
-		toggled = not toggled
-		TweenService:Create(Toggle, TweenInfo.new(0.2), {
-			BackgroundColor3 = toggled and Color3.fromRGB(150, 0, 0) or Color3.fromRGB(90, 0, 0)
-		}):Play()
+	local function AddButton(name, callback)
+		local Button = Instance.new("TextButton", TabContent)
+		Button.Size = UDim2.new(1, -10, 0, 30)
+		Button.BackgroundColor3 = Color3.fromRGB(90, 0, 0)
+		Button.Text = name
+		Button.TextColor3 = Color3.new(1, 1, 1)
+		Button.Font = Enum.Font.SourceSans
+		Button.TextSize = 18
+		Button.BorderSizePixel = 0
+		Button.Name = name
+		Instance.new("UICorner", Button).CornerRadius = UDim.new(0, 8)
+
+		Button.MouseButton1Click:Connect(function()
+			TweenService:Create(Button, TweenInfo.new(0.1), {BackgroundColor3 = Color3.fromRGB(150, 0, 0)}):Play()
+			task.wait(0.1)
+			TweenService:Create(Button, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(90, 0, 0)}):Play()
+			pcall(callback)
+		end)
+	end
+
+	local function AddToggle(name, default, callback)
+		local Toggle = Instance.new("TextButton", TabContent)
+		Toggle.Size = UDim2.new(1, -10, 0, 30)
+		Toggle.BackgroundColor3 = default and Color3.fromRGB(150, 0, 0) or Color3.fromRGB(90, 0, 0)
+		Toggle.TextColor3 = Color3.new(1, 1, 1)
+		Toggle.Font = Enum.Font.SourceSans
+		Toggle.TextSize = 18
+		Toggle.BorderSizePixel = 0
+		Toggle.Name = name
+		Instance.new("UICorner", Toggle).CornerRadius = UDim.new(0, 8)
+
+		local toggled = default
 		Toggle.Text = name .. " : " .. (toggled and "ON" or "OFF")
-		pcall(callback, toggled)
-	end)
+		configs[name] = toggled
+
+		Toggle.MouseButton1Click:Connect(function()
+			toggled = not toggled
+			configs[name] = toggled
+			TweenService:Create(Toggle, TweenInfo.new(0.2), {
+				BackgroundColor3 = toggled and Color3.fromRGB(150, 0, 0) or Color3.fromRGB(90, 0, 0)
+			}):Play()
+			Toggle.Text = name .. " : " .. (toggled and "ON" or "OFF")
+			pcall(callback, toggled)
+			MakeConfig(currentConfig)
+		end)
+	end
+
+	local function AddTextBox(placeholder, callback)
+		local Box = Instance.new("TextBox", TabContent)
+		Box.Size = UDim2.new(1, -10, 0, 30)
+		Box.BackgroundColor3 = Color3.fromRGB(60, 0, 0)
+		Box.PlaceholderText = placeholder
+		Box.Text = ""
+		Box.TextColor3 = Color3.new(1, 1, 1)
+		Box.Font = Enum.Font.SourceSans
+		Box.TextSize = 18
+		Box.BorderSizePixel = 0
+		Box.Name = placeholder
+		Instance.new("UICorner", Box).CornerRadius = UDim.new(0, 8)
+
+		Box.FocusLost:Connect(function(enterPressed)
+			if enterPressed then
+				configs[placeholder] = Box.Text
+				MakeConfig(currentConfig)
+				pcall(callback, Box.Text)
+			end
+		end)
+	end
+
+	return {
+		AddSection = AddSection,
+		AddButton = AddButton,
+		AddToggle = AddToggle,
+		AddTextBox = AddTextBox,
+		Content = TabContent
+	}
 end
 
-return {
-	AddSection = AddSection,
-	AddButton = AddButton,
-	AddToggle = AddToggle,
-	Content = TabContent
-}
-
-end
-
+--== CONTROLES DE ABERTURA ==--
 OpenButton.MouseButton1Click:Connect(function()
-MainFrame.Visible = not MainFrame.Visible
-if MainFrame.Visible then
-TweenService:Create(MainFrame, TweenInfo.new(0.4), {Size = UDim2.new(0, 450, 0, 300)}):Play()
-else
-TweenService:Create(MainFrame, TweenInfo.new(0.4), {Size = UDim2.new(0, 0, 0, 0)}):Play()
-task.wait(0.4)
-MainFrame.Visible = false
-end
+	MainFrame.Visible = not MainFrame.Visible
 end)
 
 CloseButton.MouseButton1Click:Connect(function()
-TweenService:Create(MainFrame, TweenInfo.new(0.4), {Size = UDim2.new(0, 0, 0, 0)}):Play()
-task.wait(0.4)
-MainFrame.Visible = false
+	MainFrame.Visible = false
 end)
+
+--== ABA DE CONFIGS ==--
+local ConfigTab = createTab("Configs")
+
+ConfigTab.AddSection("enter ou < para escrever a config")
+
+ConfigTab.AddSection("system config")
+
+ConfigTab.AddTextBox("name config", function(txt)
+	currentConfig = txt
+	notify("System", "Config selected: " .. txt, 4)
+end)
+
+ConfigTab.AddButton("Create / Save Config", function()
+	MakeConfig(currentConfig)
+end)
+
+ConfigTab.AddButton("Load Config", function()
+	LoadConfig(currentConfig)
+end)
+
+
 
 -- // Exemplo de uso:
 local ServerTab = createTab("Server")
@@ -1623,58 +1715,207 @@ local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 
 local tpWalkEnabled = false
-local modes = {"Legit", "Mediam", "Hack"}
-local currentIndex = 1
-
-local tpSettings = {
-Legit = {distance = 0.02, delay = 0.01},
-Mediam = {distance = 0.12, delay = 0.01},
-Hack = {distance = 0.20, delay = 0.001}
-}
-
-local function getSettings()
-local currentMode = modes[currentIndex]
-return tpSettings[currentMode].distance, tpSettings[currentMode].delay, currentMode
-end
+local tpSpeed = 0.1
+local tpDelay = 0.01
+local tpThread
 
 local function tpStep()
-local character = LocalPlayer.Character
-if not character or not character:FindFirstChild("HumanoidRootPart") then return end
-
-local hrp = character.HumanoidRootPart
-local humanoid = character:FindFirstChildOfClass("Humanoid")
-if not humanoid then return end
-
-local moveDir = humanoid.MoveDirection
-if moveDir.Magnitude > 0 then
-    local distance = select(1, getSettings())
-    hrp.CFrame = hrp.CFrame + moveDir * distance
+	local character = LocalPlayer.Character
+	if not character or not character:FindFirstChild("HumanoidRootPart") then return end
+	local hrp = character.HumanoidRootPart
+	local humanoid = character:FindFirstChildOfClass("Humanoid")
+	if not humanoid then return end
+	local moveDir = humanoid.MoveDirection
+	if moveDir.Magnitude > 0 then
+		hrp.CFrame = hrp.CFrame + moveDir * tpSpeed
+	end
 end
 
+local function startTp()
+	tpThread = task.spawn(function()
+		while tpWalkEnabled do
+			tpStep()
+			task.wait(tpDelay)
+		end
+	end)
+end
+
+BartTab.AddTextBox("Speed TpWalk", function(txt)
+	local val = tonumber(txt)
+	if val then
+		tpSpeed = val
+		notify("Tpwalk", ": " .. val, 2)
+	else
+		notify("TpWalk", "Invalid number", 2)
+	end
+end)
+
+BartTab.AddToggle("Enable TpWalk", false, function(state)
+	tpWalkEnabled = state
+	if tpWalkEnabled then
+		startTp()
+		notify("TpWalk", "Activated", 1)
+	else
+		tpWalkEnabled = false
+		if tpThread then
+			task.cancel(tpThread)
+		end
+		notify("TpWalk", "Disabled", 1)
+	end
+end)
+
+ BartTab.AddButton("tp Walk Gui ", function()
+
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local CoreGui = game:GetService("CoreGui")
+
+-- Remove GUI antiga se existir
+if CoreGui:FindFirstChild("TpWalkGui") then
+	CoreGui.TpWalkGui:Destroy()
+end
+
+--== VARIÁVEIS ==--
+local tpWalkEnabled = false
+local tpSpeed = 0.1
+local tpDelay = 0.01
+
+--== FUNÇÃO DE TELEPORTE ==--
+local function tpStep()
+	local character = LocalPlayer.Character
+	if not character or not character:FindFirstChild("HumanoidRootPart") then return end
+	local hrp = character.HumanoidRootPart
+	local humanoid = character:FindFirstChildOfClass("Humanoid")
+	if not humanoid then return end
+	local moveDir = humanoid.MoveDirection
+	if moveDir.Magnitude > 0 then
+		hrp.CFrame = hrp.CFrame + moveDir * tpSpeed
+	end
 end
 
 local function tpLoop()
-task.spawn(function()
-while tpWalkEnabled do
-tpStep()
-local _, delay = getSettings()
-task.wait(delay)
-end
-end)
+	task.spawn(function()
+		while tpWalkEnabled do
+			tpStep()
+			task.wait(tpDelay)
+		end
+	end)
 end
 
-BartTab.AddToggle("Active Mode", false, function(val)
-tpWalkEnabled = val
-if val then tpLoop() end
+--== GUI ==--
+local ScreenGui = Instance.new("ScreenGui", CoreGui)
+ScreenGui.Name = "TpWalkGui"
+
+local MainFrame = Instance.new("Frame", ScreenGui)
+MainFrame.Size = UDim2.new(0, 220, 0, 160)
+MainFrame.Position = UDim2.new(0.5, -110, 0.5, -80)
+MainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+MainFrame.BorderSizePixel = 0
+MainFrame.Active = true
+MainFrame.Draggable = true
+
+local UICorner = Instance.new("UICorner", MainFrame)
+UICorner.CornerRadius = UDim.new(0, 12)
+
+local BorderLine = Instance.new("UIStroke", MainFrame)
+BorderLine.Color = Color3.fromRGB(100, 255, 100)
+BorderLine.Thickness = 2
+
+local Title = Instance.new("TextLabel", MainFrame)
+Title.Text = "Tp Walk: median 0.3"
+Title.Size = UDim2.new(1, 0, 0, 40)
+Title.BackgroundTransparency = 1
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.Font = Enum.Font.GothamBold
+Title.TextSize = 22
+
+local SpeedLabel = Instance.new("TextLabel", MainFrame)
+SpeedLabel.Text = "Speed tpwalk"
+SpeedLabel.Size = UDim2.new(1, -20, 0, 25)
+SpeedLabel.Position = UDim2.new(0, 10, 0, 45)
+SpeedLabel.BackgroundTransparency = 1
+SpeedLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+SpeedLabel.Font = Enum.Font.Gotham
+SpeedLabel.TextSize = 16
+SpeedLabel.TextXAlignment = Enum.TextXAlignment.Left
+
+local SpeedBox = Instance.new("TextBox", MainFrame)
+SpeedBox.Size = UDim2.new(1, -20, 0, 30)
+SpeedBox.Position = UDim2.new(0, 10, 0, 70)
+SpeedBox.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+SpeedBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+SpeedBox.PlaceholderText = "Ex: 0.1"
+SpeedBox.Font = Enum.Font.Gotham
+SpeedBox.TextSize = 16
+
+local BoxCorner = Instance.new("UICorner", SpeedBox)
+BoxCorner.CornerRadius = UDim.new(0, 8)
+
+local EnableButton = Instance.new("TextButton", MainFrame)
+EnableButton.Text = "Enable"
+EnableButton.Size = UDim2.new(1, -20, 0, 35)
+EnableButton.Position = UDim2.new(0, 10, 0, 110)
+EnableButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+EnableButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+EnableButton.Font = Enum.Font.GothamBold
+EnableButton.TextSize = 18
+
+local BtnCorner = Instance.new("UICorner", EnableButton)
+BtnCorner.CornerRadius = UDim.new(0, 8)
+
+--== SISTEMA DE ARRASTO SUAVE ==--
+local dragging = false
+local dragInput, mousePos, framePos
+
+MainFrame.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 then
+		dragging = true
+		mousePos = input.Position
+		framePos = MainFrame.Position
+		input.Changed:Connect(function()
+			if input.UserInputState == Enum.UserInputState.End then
+				dragging = false
+			end
+		end)
+	end
 end)
 
-BartTab.AddButton("> Change Mode Speed", function()
-currentIndex = currentIndex + 1
-if currentIndex > #modes then
-currentIndex = 1
-end
-local _, _, mode = getSettings()
-notify("TP Walk", "mode : " .. mode, 0.5)
+MainFrame.InputChanged:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseMovement then
+		dragInput = input
+	end
+end)
+
+game:GetService("UserInputService").InputChanged:Connect(function(input)
+	if input == dragInput and dragging then
+		local delta = input.Position - mousePos
+		MainFrame.Position = UDim2.new(
+			framePos.X.Scale, framePos.X.Offset + delta.X,
+			framePos.Y.Scale, framePos.Y.Offset + delta.Y
+		)
+	end
+end)
+
+--== AÇÕES ==--
+SpeedBox.FocusLost:Connect(function()
+	local val = tonumber(SpeedBox.Text)
+	if val then
+		tpSpeed = val
+	end
+end)
+
+EnableButton.MouseButton1Click:Connect(function()
+	tpWalkEnabled = not tpWalkEnabled
+	if tpWalkEnabled then
+		EnableButton.Text = "Disable"
+		EnableButton.BackgroundColor3 = Color3.fromRGB(70, 170, 70)
+		tpLoop()
+	else
+		EnableButton.Text = "Enable"
+		EnableButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+	end
+end)
+
 end)
 
 local FarmTab = createTab("Farm")
@@ -1841,9 +2082,8 @@ if pl.Character and pl.Character:FindFirstChild("HumanoidRootPart") then
 end
 end)
 
-local ConfigTab = createTab("Config")
 
-ConfigTab.AddSection("system")
+ConfigTab.AddSection("game States")
 
 ConfigTab.AddButton("ver FPS", function()
 local RunService = game:GetService("RunService")
@@ -1852,7 +2092,7 @@ notify("System", "FPS: " .. fps, 3)
 end)
 
 
-ConfigTab.AddSection("game States")
+
 
 ConfigTab.AddToggle("ver FPS jogo e MS", false, function(state)
 local RunService = game:GetService("RunService")
@@ -2247,6 +2487,9 @@ end)
 
 
 ConfigTab.AddButton("destroy a interface", function() ScreenGui:Destroy() end)
+
+
+
 
 
 local ScriptTab = createTab("Script")
