@@ -1083,6 +1083,27 @@ HomerTab.AddToggle("auto achar barts (BETA)", false, function(v)
 	waypoints = {}
 end)
 
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+-- Função de matar todos (discreto)
+local function killd()
+	for _, player in pairs(Players:GetPlayers()) do
+		if player ~= LocalPlayer and player.Team and player.Team.Name == "Bart" then
+			local character = player.Character
+			local root = character and character:FindFirstChild("HumanoidRootPart")
+			local localRoot = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+
+			if root and localRoot then
+				root.CFrame = localRoot.CFrame
+			end
+		end
+	end
+end
+
+-- Botão na aba HomerTab
+HomerTab.AddButton("Matar todos (discreto)", killd)
+
 HomerTab.AddButton("mata todos", killAll)
 
 HomerTab.AddButton("mata aleatorio", killRandom)
@@ -1677,6 +1698,41 @@ for _, obj in ipairs(path:GetChildren()) do
 end
 
 notify("System", "Deleted " .. deleted .. " Doors / BartDoors from Spaceship.", 5)
+
+end)
+
+BartTab.AddButton("kill Homer in Space ship (beta)", function()
+
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+local ship = workspace:WaitForChild("map"):WaitForChild("Spaceship")
+
+local buttons = {
+	ship:WaitForChild("Button2"),
+	ship:WaitForChild("Button1"),
+	ship:WaitForChild("Button3")
+}
+
+local function teleportTo(part)
+	if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+		LocalPlayer.Character.HumanoidRootPart.CFrame = part.CFrame + Vector3.new(0, 2, 0)
+	end
+end
+
+local function clickButton(part)
+	local click = part:FindFirstChildOfClass("ClickDetector")
+	if click then
+		fireclickdetector(click)
+	end
+end
+
+for _, button in ipairs(buttons) do
+	teleportTo(button)
+	task.wait(0.3)
+	clickButton(button)
+	task.wait(0.5)
+end
 
 end)
 
