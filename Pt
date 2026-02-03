@@ -118,11 +118,10 @@ end
 loadstring(game:HttpGet("https://rawscripts.net/raw/Universal-Script-Simple-AntiCheat-Bypass-84341"))()
 
 
-notify("System", "ant cheat carregado", 1)
+
+notify("aviso", "Scripts iram funcionar", 1)
 wait(1)
-notify("System", "carregando Arquivo Npcc", 1)
-wait(1)
-notify("System", "quase la..", 1)
+notify("aviso", "a Hub usa ant cheats!", 1)
 
 --== HAVENS SCRIPT HUB COM SISTEMA DE CONFIGURAÇÃO COMPLETO ==--
 
@@ -206,7 +205,7 @@ local function MakeConfig(name)
 	if not isfolder(folder) then makefolder(folder) end
 	local path = folder .. "/" .. name .. ".json"
 	writefile(path, HttpService:JSONEncode(configs))
-	notify("sucess", ": " .. name, 1)
+	print("g")
 end
 
 local function LoadConfig(name)
@@ -391,17 +390,416 @@ end)
 --== ABA DE CONFIGS ==--
 local ConfigTab = createTab("Configs")
 
+ConfigTab.AddSection("game States")
+
+ConfigTab.AddButton("ver FPS", function()
+local RunService = game:GetService("RunService")
+local fps = math.floor(1 / RunService.RenderStepped:Wait())
+notify("System", "FPS: " .. fps, 3)
+end)
 
 
 
--- // Exemplo de uso:
-local ServerTab = createTab("Server")
 
-ServerTab.Content.Visible = true
+ConfigTab.AddToggle("ver FPS jogo e MS", false, function(state)
+local RunService = game:GetService("RunService")
+local CoreGui = game:GetService("CoreGui")
+local UserInputService = game:GetService("UserInputService")
 
-ServerTab.AddSection("functions")
+local fpsGui = CoreGui:FindFirstChild("GhostFPSGui")
+local running = state
 
-ServerTab.AddButton("destruir Tabela de status", function()
+if state then
+    if not fpsGui then
+        fpsGui = Instance.new("ScreenGui", CoreGui)
+        fpsGui.Name = "GhostFPSGui"
+
+        -- GUI principal
+        local mainFrame = Instance.new("Frame", fpsGui)
+        mainFrame.Name = "MainFrame"
+        mainFrame.Size = UDim2.new(0, 180, 0, 50)
+        mainFrame.Position = UDim2.new(0, 10, 0, 10)
+        mainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+        mainFrame.BorderSizePixel = 0
+        Instance.new("UICorner", mainFrame).CornerRadius = UDim.new(0, 6)
+
+        -- Barra de arrasto
+        local dragBar = Instance.new("Frame", mainFrame)
+        dragBar.Name = "DragBar"
+        dragBar.Size = UDim2.new(1, 0, 0, 20)
+        dragBar.BackgroundColor3 = Color3.fromRGB(50, 0, 0)
+        dragBar.BorderSizePixel = 0
+        Instance.new("UICorner", dragBar).CornerRadius = UDim.new(0, 6)
+
+        local dragLabel = Instance.new("TextLabel", dragBar)
+        dragLabel.Size = UDim2.new(1, 0, 1, 0)
+        dragLabel.BackgroundTransparency = 1
+        dragLabel.Font = Enum.Font.SourceSansBold
+        dragLabel.TextColor3 = Color3.new(1, 1, 1)
+        dragLabel.TextSize = 16
+        dragLabel.Text = "Drag"
+
+        -- Barra de status FPS/MS
+        local infoBar = Instance.new("TextLabel", mainFrame)
+        infoBar.Name = "InfoBar"
+        infoBar.Size = UDim2.new(1, 0, 0, 25)
+        infoBar.Position = UDim2.new(0, 0, 0, 25)
+        infoBar.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+        infoBar.TextColor3 = Color3.new(1, 1, 1)
+        infoBar.Font = Enum.Font.Code
+        infoBar.TextSize = 15
+        infoBar.Text = "FPS: 0 | MS: 0"
+        Instance.new("UICorner", infoBar).CornerRadius = UDim.new(0, 6)
+
+        -- Sistema de arrastar
+        local dragging, dragInput, dragStart, startPos
+
+        local function update(input)
+            local delta = input.Position - dragStart
+            mainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X,
+                startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        end
+
+        dragBar.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                dragging = true
+                dragStart = input.Position
+                startPos = mainFrame.Position
+                input.Changed:Connect(function()
+                    if input.UserInputState == Enum.UserInputState.End then
+                        dragging = false
+                    end
+                end)
+            end
+        end)
+
+        dragBar.InputChanged:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+                dragInput = input
+            end
+        end)
+
+        UserInputService.InputChanged:Connect(function(input)
+            if input == dragInput and dragging then
+                update(input)
+            end
+        end)
+
+        -- Sistema FPS / MS
+        task.spawn(function()
+            local last = tick()
+            local frameCount = 0
+            while running and fpsGui and fpsGui.Parent do
+                frameCount += 1
+                local now = tick()
+                if now - last >= 1 then
+                    local fps = frameCount
+                    frameCount = 0
+                    last = now
+                    local delta = RunService.RenderStepped:Wait()
+                    local ms = math.floor(delta * 1000)
+                    infoBar.Text = "FPS: " .. fps .. " | MS: " .. ms
+                end
+                RunService.RenderStepped:Wait()
+            end
+        end)
+    end
+else
+    if fpsGui then
+        fpsGui:Destroy()
+    end
+end
+
+end)
+
+--// VIEW BODY
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+local viewBodyActive = false
+local highlights = {}
+
+local function createHighlight(part)
+local highlight = Instance.new("BoxHandleAdornment")
+highlight.Adornee = part
+highlight.Color3 = Color3.new(1, 1, 0)
+highlight.Transparency = 0.8
+highlight.AlwaysOnTop = true
+highlight.ZIndex = 10
+highlight.Size = part.Size + Vector3.new(0.1, 0.1, 0.1)
+highlight.Parent = part
+return highlight
+end
+
+local function enableViewBody()
+local char = LocalPlayer.Character
+if not char then return end
+for _, part in ipairs(char:GetChildren()) do
+if part:IsA("BasePart") then
+local h = createHighlight(part)
+table.insert(highlights, h)
+end
+end
+end
+
+local function disableViewBody()
+for _, h in ipairs(highlights) do
+if h and h.Parent then
+h:Destroy()
+end
+end
+highlights = {}
+end
+
+ConfigTab.AddToggle("ver corpo seu", false, function(state)
+viewBodyActive = state
+if state then
+enableViewBody()
+else
+disableViewBody()
+end
+end)
+
+LocalPlayer.CharacterAdded:Connect(function()
+task.wait(0.5)
+if viewBodyActive then
+enableViewBody()
+end
+end)
+
+-- script create BY ghost
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local Stats = game:GetService("Stats")
+local LocalPlayer = Players.LocalPlayer
+LocalPlayer.Archivable = true
+
+local ghostActive = false
+local Configuration = {
+Enabled = true,
+Parts = {
+'HumanoidRootPart', 'Head', 'Left Arm', 'Right Arm', 'Left Leg', 'Right Leg',
+'LeftUpperArm', 'RightUpperArm', 'LeftLowerArm', 'RightLowerArm',
+'LeftHand', 'RightHand', 'LeftUpperLeg', 'RightUpperLeg',
+'LeftLowerLeg', 'RightLowerLeg', 'LeftFoot', 'RightFoot'
+},
+Timing = {
+MinDelay = 0.02,
+MaxDelay = 0.12,
+MaxDistance = 5,
+PingSmoothing = 0.12,
+DefaultPing = 120
+}
+}
+
+getgenv().ghostrgb = true
+
+local GhostManager = {
+Parts = {},
+FrameHistory = {},
+Character = nil
+}
+
+function GhostManager:InitializeGhostPart(originalPart)
+local ghostPart = Instance.new('Part')
+ghostPart.Name = originalPart.Name .. '_Ghost'
+ghostPart.Size = originalPart.Size
+ghostPart.Anchored = true
+ghostPart.CanCollide = false
+ghostPart.Transparency = 1
+ghostPart.CFrame = originalPart.CFrame
+ghostPart.Parent = workspace
+
+local selectionBox = Instance.new('SelectionBox')
+selectionBox.Adornee = ghostPart
+selectionBox.LineThickness = 0.01
+selectionBox.Parent = ghostPart
+
+return {
+    Original = originalPart,
+    Ghost = ghostPart,
+    Box = selectionBox
+}
+
+end
+
+function GhostManager:CalculateCurrentPing()
+local networkStats = Stats.Network
+if not networkStats then return Configuration.Timing.DefaultPing end
+
+local pingStat = networkStats.ServerStatsItem['Data Ping'] or networkStats.ServerStatsItem['Data Ping (ms)']
+if not pingStat then return Configuration.Timing.DefaultPing end
+
+return tonumber(pingStat:GetValue()) or Configuration.Timing.DefaultPing
+
+end
+
+function GhostManager:UpdateTimingDynamic(ping)
+local t = Configuration.Timing
+local pingFactor = math.clamp(ping / 200, 0.5, 3)
+
+t.MinDelay = math.clamp(0.02 * pingFactor, 0.02, 0.08)
+t.MaxDelay = math.clamp(0.08 * pingFactor, 0.04, 0.18)
+t.MaxDistance = math.clamp(3.5 * pingFactor, 2, 8)
+t.PingSmoothing = math.clamp(0.12 / pingFactor, 0.05, 0.2)
+
+end
+
+function GhostManager:ApplyColorEffect(selectionBox)
+if getgenv().ghostrgb then
+selectionBox.Color3 = Color3.fromHSV((tick() % 5) / 5, 1, 1)
+else
+selectionBox.Color3 = Color3.new(1, 1, 1)
+end
+end
+
+function GhostManager:InitializeCharacter()
+self.Character = LocalPlayer.Character
+if not self.Character then return end
+
+self:CleanupExistingGhosts()
+
+local rootPart = self.Character:FindFirstChild('HumanoidRootPart')
+if not rootPart then return end
+
+self.Parts = {}
+for _, partName in ipairs(Configuration.Parts) do
+    local characterPart = self.Character:FindFirstChild(partName)
+    if characterPart and characterPart:IsA('BasePart') then
+        self.Parts[partName] = self:InitializeGhostPart(characterPart)
+    end
+end
+
+end
+
+function GhostManager:CleanupExistingGhosts()
+for _, child in ipairs(workspace:GetChildren()) do
+if child:IsA('Part') and child.Name:match('_Ghost$') then
+child:Destroy()
+end
+end
+end
+
+function GhostManager:CaptureFrameData()
+if not self.Character then return end
+
+local rootPart = self.Character:FindFirstChild('HumanoidRootPart')
+if not rootPart then return end
+
+local relativeTransforms = {}
+for partName, ghostData in pairs(self.Parts) do
+    if ghostData.Original and ghostData.Original.Parent then
+        relativeTransforms[partName] = rootPart.CFrame:ToObjectSpace(ghostData.Original.CFrame)
+    end
+end
+
+local currentTime = tick()
+table.insert(self.FrameHistory, {
+    Timestamp = currentTime,
+    Transform = rootPart.CFrame,
+    Position = rootPart.Position,
+    Velocity = rootPart.Velocity,
+    RelativeTransforms = relativeTransforms
+})
+
+if #self.FrameHistory > 300 then
+    for _ = 1, 80 do table.remove(self.FrameHistory, 1) end
+end
+
+end
+
+function GhostManager:UpdateGhostParts(deltaTime)
+if not self.Character then return end
+
+local rootPart = self.Character:FindFirstChild('HumanoidRootPart')
+if not rootPart then return end
+
+local currentPing = self:CalculateCurrentPing()
+self:UpdateTimingDynamic(currentPing)
+
+local t = Configuration.Timing
+t.DefaultPing = currentPing * t.PingSmoothing + t.DefaultPing * (1 - t.PingSmoothing)
+
+local targetDelay = math.clamp(t.DefaultPing / 2000, t.MinDelay, t.MaxDelay)
+local targetFrame = self:FindTargetFrame(tick() - targetDelay)
+if not targetFrame then return end
+
+local timeDifference = math.clamp(tick() - targetFrame.Timestamp, 0, 0.06)
+local predictedPosition = targetFrame.Position + targetFrame.Velocity * timeDifference * 0.9
+local predictedTransform = CFrame.new(predictedPosition) * (targetFrame.Transform - targetFrame.Transform.Position)
+
+local stabilityFactor = math.clamp(1 - math.abs(currentPing - t.DefaultPing) / 300, 0.25, 1)
+
+for _, ghostData in pairs(self.Parts) do
+    self:UpdateSingleGhostPart(ghostData, targetFrame, predictedTransform, deltaTime, stabilityFactor)
+end
+
+end
+
+function GhostManager:FindTargetFrame(targetTime)
+for i = #self.FrameHistory, 1, -1 do
+if self.FrameHistory[i].Timestamp <= targetTime then
+return self.FrameHistory[i]
+end
+end
+return self.FrameHistory[1]
+end
+
+function GhostManager:UpdateSingleGhostPart(ghostData, targetFrame, predictedTransform, deltaTime, stability)
+local ghostPart = ghostData.Ghost
+local selectionBox = ghostData.Box
+if not ghostPart then return end
+
+local relativeTransform = targetFrame.RelativeTransforms[ghostData.Original.Name]
+local targetCFrame = relativeTransform and predictedTransform * relativeTransform or 
+                    (ghostData.Original and ghostData.Original.CFrame or ghostPart.CFrame)
+
+local positionOffset = (targetCFrame.Position - predictedTransform.Position).Magnitude
+if positionOffset > Configuration.Timing.MaxDistance then
+    local direction = (targetCFrame.Position - predictedTransform.Position).Unit
+    local rotationX, rotationY, rotationZ = targetCFrame:ToEulerAnglesXYZ()
+    targetCFrame = CFrame.new(predictedTransform.Position + direction * Configuration.Timing.MaxDistance) * 
+                  CFrame.Angles(rotationX, rotationY, rotationZ)
+end
+
+local interpolationWeight = math.clamp(deltaTime * 18 * stability, 0, 1)
+ghostPart.CFrame = ghostPart.CFrame:Lerp(targetCFrame, interpolationWeight)
+
+self:ApplyColorEffect(selectionBox)
+
+end
+
+ConfigTab.AddToggle("View Position In Server", false, function(state)
+ghostActive = state
+if state then
+GhostManager:InitializeCharacter()
+RunService.Heartbeat:Connect(function(deltaTime)
+if ghostActive then
+GhostManager:CaptureFrameData()
+GhostManager:UpdateGhostParts(deltaTime)
+end
+end)
+LocalPlayer.CharacterAdded:Connect(function()
+task.wait(0.5)
+if ghostActive then
+GhostManager:InitializeCharacter()
+end
+end)
+else
+ghostActive = false
+GhostManager:CleanupExistingGhosts()
+end
+end)
+
+
+ConfigTab.AddButton("destroy a interface", function() ScreenGui:Destroy() end)
+
+
+
+ConfigTab.AddSection("server")
+
+ConfigTab.AddButton("destruir Tabela de status", function()
 -- script create BY ghost
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
@@ -446,7 +844,7 @@ playerGui.ChildAdded:Connect(function(c)
 end)
 end)
 
-ServerTab.AddButton("morrer", function()
+ConfigTab.AddButton("morrer", function()
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
@@ -454,10 +852,50 @@ LocalPlayer.Character.Humanoid.Health = 0
 end
 end)
 
-ServerTab.AddButton("reentrar", function()
+ConfigTab.AddButton("reentrar", function()
 local TeleportService = game:GetService("TeleportService")
 TeleportService:Teleport(game.PlaceId)
 end)
+
+ConfigTab.AddButton("server hop ", function()
+
+
+local TeleportService = game:GetService("TeleportService")
+local HttpService = game:GetService("HttpService")
+local PlaceId = game.PlaceId
+local JobId = game.JobId
+
+local function serverHop()
+    -- URL da API do Roblox para listar servidores do jogo
+    local url = "https://games.roblox.com/v1/games/" .. PlaceId .. "/servers/Public?sortOrder=Asc&limit=100"
+    
+    local success, result = pcall(function()
+        return HttpService:JSONDecode(game:HttpGet(url))
+    end)
+
+    if success and result.data then
+        for _, server in ipairs(result.data) do
+            -- Verifica se o servidor tem espaço e não é o servidor atual
+            if server.playing < server.maxPlayers and server.id ~= JobId then
+                TeleportService:TeleportToPlaceInstance(PlaceId, server.id)
+                return
+            end
+        end
+    end
+    print("Nenhum servidor alternativo encontrado.")
+end
+
+
+serverHop()
+
+
+end)
+
+
+
+ConfigTab.Content.Visible = true
+
+
 
 
 
@@ -1100,6 +1538,33 @@ end)
 
 
 local BartTab = createTab("Bart")
+
+BartTab.AddToggle("Bang", false, function(state)
+	local Players = game:GetService("Players")
+	local speaker = Players.LocalPlayer
+
+	if not speaker.Character then return end
+	local humanoid = speaker.Character:FindFirstChildOfClass("Humanoid")
+	if not humanoid then return end
+
+	if state then
+		-- Ativar animação R6
+		if bang then bang:Stop() end
+		if bangAnim then bangAnim:Destroy() end
+
+		bangAnim = Instance.new("Animation")
+		bangAnim.AnimationId = "rbxassetid://148840371" -- animação R6 padrão
+
+		bang = humanoid:LoadAnimation(bangAnim)
+		bang.Looped = true
+		bang:Play(0.1, 1, 1)
+		bang:AdjustSpeed(3)
+	else
+		-- Desativar animação
+		if bang then bang:Stop() bang = nil end
+		if bangAnim then bangAnim:Destroy() bangAnim = nil end
+	end
+end)
 
 BartTab.AddToggle("Noclip ( beta )", false, function(state)
     task.spawn(function()
@@ -2123,416 +2588,14 @@ end
 end)
 
 
-ConfigTab.AddSection("game States")
-
-ConfigTab.AddButton("ver FPS", function()
-local RunService = game:GetService("RunService")
-local fps = math.floor(1 / RunService.RenderStepped:Wait())
-notify("System", "FPS: " .. fps, 3)
-end)
-
-
-
-
-ConfigTab.AddToggle("ver FPS jogo e MS", false, function(state)
-local RunService = game:GetService("RunService")
-local CoreGui = game:GetService("CoreGui")
-local UserInputService = game:GetService("UserInputService")
-
-local fpsGui = CoreGui:FindFirstChild("GhostFPSGui")
-local running = state
-
-if state then
-    if not fpsGui then
-        fpsGui = Instance.new("ScreenGui", CoreGui)
-        fpsGui.Name = "GhostFPSGui"
-
-        -- GUI principal
-        local mainFrame = Instance.new("Frame", fpsGui)
-        mainFrame.Name = "MainFrame"
-        mainFrame.Size = UDim2.new(0, 180, 0, 50)
-        mainFrame.Position = UDim2.new(0, 10, 0, 10)
-        mainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-        mainFrame.BorderSizePixel = 0
-        Instance.new("UICorner", mainFrame).CornerRadius = UDim.new(0, 6)
-
-        -- Barra de arrasto
-        local dragBar = Instance.new("Frame", mainFrame)
-        dragBar.Name = "DragBar"
-        dragBar.Size = UDim2.new(1, 0, 0, 20)
-        dragBar.BackgroundColor3 = Color3.fromRGB(50, 0, 0)
-        dragBar.BorderSizePixel = 0
-        Instance.new("UICorner", dragBar).CornerRadius = UDim.new(0, 6)
-
-        local dragLabel = Instance.new("TextLabel", dragBar)
-        dragLabel.Size = UDim2.new(1, 0, 1, 0)
-        dragLabel.BackgroundTransparency = 1
-        dragLabel.Font = Enum.Font.SourceSansBold
-        dragLabel.TextColor3 = Color3.new(1, 1, 1)
-        dragLabel.TextSize = 16
-        dragLabel.Text = "Drag"
-
-        -- Barra de status FPS/MS
-        local infoBar = Instance.new("TextLabel", mainFrame)
-        infoBar.Name = "InfoBar"
-        infoBar.Size = UDim2.new(1, 0, 0, 25)
-        infoBar.Position = UDim2.new(0, 0, 0, 25)
-        infoBar.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
-        infoBar.TextColor3 = Color3.new(1, 1, 1)
-        infoBar.Font = Enum.Font.Code
-        infoBar.TextSize = 15
-        infoBar.Text = "FPS: 0 | MS: 0"
-        Instance.new("UICorner", infoBar).CornerRadius = UDim.new(0, 6)
-
-        -- Sistema de arrastar
-        local dragging, dragInput, dragStart, startPos
-
-        local function update(input)
-            local delta = input.Position - dragStart
-            mainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X,
-                startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-        end
-
-        dragBar.InputBegan:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-                dragging = true
-                dragStart = input.Position
-                startPos = mainFrame.Position
-                input.Changed:Connect(function()
-                    if input.UserInputState == Enum.UserInputState.End then
-                        dragging = false
-                    end
-                end)
-            end
-        end)
-
-        dragBar.InputChanged:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-                dragInput = input
-            end
-        end)
-
-        UserInputService.InputChanged:Connect(function(input)
-            if input == dragInput and dragging then
-                update(input)
-            end
-        end)
-
-        -- Sistema FPS / MS
-        task.spawn(function()
-            local last = tick()
-            local frameCount = 0
-            while running and fpsGui and fpsGui.Parent do
-                frameCount += 1
-                local now = tick()
-                if now - last >= 1 then
-                    local fps = frameCount
-                    frameCount = 0
-                    last = now
-                    local delta = RunService.RenderStepped:Wait()
-                    local ms = math.floor(delta * 1000)
-                    infoBar.Text = "FPS: " .. fps .. " | MS: " .. ms
-                end
-                RunService.RenderStepped:Wait()
-            end
-        end)
-    end
-else
-    if fpsGui then
-        fpsGui:Destroy()
-    end
-end
-
-end)
-
---// VIEW BODY
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
-
-local viewBodyActive = false
-local highlights = {}
-
-local function createHighlight(part)
-local highlight = Instance.new("BoxHandleAdornment")
-highlight.Adornee = part
-highlight.Color3 = Color3.new(1, 1, 0)
-highlight.Transparency = 0.8
-highlight.AlwaysOnTop = true
-highlight.ZIndex = 10
-highlight.Size = part.Size + Vector3.new(0.1, 0.1, 0.1)
-highlight.Parent = part
-return highlight
-end
-
-local function enableViewBody()
-local char = LocalPlayer.Character
-if not char then return end
-for _, part in ipairs(char:GetChildren()) do
-if part:IsA("BasePart") then
-local h = createHighlight(part)
-table.insert(highlights, h)
-end
-end
-end
-
-local function disableViewBody()
-for _, h in ipairs(highlights) do
-if h and h.Parent then
-h:Destroy()
-end
-end
-highlights = {}
-end
-
-ConfigTab.AddToggle("ver corpo seu", false, function(state)
-viewBodyActive = state
-if state then
-enableViewBody()
-else
-disableViewBody()
-end
-end)
-
-LocalPlayer.CharacterAdded:Connect(function()
-task.wait(0.5)
-if viewBodyActive then
-enableViewBody()
-end
-end)
-
--- script create BY ghost
-
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local Stats = game:GetService("Stats")
-local LocalPlayer = Players.LocalPlayer
-LocalPlayer.Archivable = true
-
-local ghostActive = false
-local Configuration = {
-Enabled = true,
-Parts = {
-'HumanoidRootPart', 'Head', 'Left Arm', 'Right Arm', 'Left Leg', 'Right Leg',
-'LeftUpperArm', 'RightUpperArm', 'LeftLowerArm', 'RightLowerArm',
-'LeftHand', 'RightHand', 'LeftUpperLeg', 'RightUpperLeg',
-'LeftLowerLeg', 'RightLowerLeg', 'LeftFoot', 'RightFoot'
-},
-Timing = {
-MinDelay = 0.02,
-MaxDelay = 0.12,
-MaxDistance = 5,
-PingSmoothing = 0.12,
-DefaultPing = 120
-}
-}
-
-getgenv().ghostrgb = true
-
-local GhostManager = {
-Parts = {},
-FrameHistory = {},
-Character = nil
-}
-
-function GhostManager:InitializeGhostPart(originalPart)
-local ghostPart = Instance.new('Part')
-ghostPart.Name = originalPart.Name .. '_Ghost'
-ghostPart.Size = originalPart.Size
-ghostPart.Anchored = true
-ghostPart.CanCollide = false
-ghostPart.Transparency = 1
-ghostPart.CFrame = originalPart.CFrame
-ghostPart.Parent = workspace
-
-local selectionBox = Instance.new('SelectionBox')
-selectionBox.Adornee = ghostPart
-selectionBox.LineThickness = 0.01
-selectionBox.Parent = ghostPart
-
-return {
-    Original = originalPart,
-    Ghost = ghostPart,
-    Box = selectionBox
-}
-
-end
-
-function GhostManager:CalculateCurrentPing()
-local networkStats = Stats.Network
-if not networkStats then return Configuration.Timing.DefaultPing end
-
-local pingStat = networkStats.ServerStatsItem['Data Ping'] or networkStats.ServerStatsItem['Data Ping (ms)']
-if not pingStat then return Configuration.Timing.DefaultPing end
-
-return tonumber(pingStat:GetValue()) or Configuration.Timing.DefaultPing
-
-end
-
-function GhostManager:UpdateTimingDynamic(ping)
-local t = Configuration.Timing
-local pingFactor = math.clamp(ping / 200, 0.5, 3)
-
-t.MinDelay = math.clamp(0.02 * pingFactor, 0.02, 0.08)
-t.MaxDelay = math.clamp(0.08 * pingFactor, 0.04, 0.18)
-t.MaxDistance = math.clamp(3.5 * pingFactor, 2, 8)
-t.PingSmoothing = math.clamp(0.12 / pingFactor, 0.05, 0.2)
-
-end
-
-function GhostManager:ApplyColorEffect(selectionBox)
-if getgenv().ghostrgb then
-selectionBox.Color3 = Color3.fromHSV((tick() % 5) / 5, 1, 1)
-else
-selectionBox.Color3 = Color3.new(1, 1, 1)
-end
-end
-
-function GhostManager:InitializeCharacter()
-self.Character = LocalPlayer.Character
-if not self.Character then return end
-
-self:CleanupExistingGhosts()
-
-local rootPart = self.Character:FindFirstChild('HumanoidRootPart')
-if not rootPart then return end
-
-self.Parts = {}
-for _, partName in ipairs(Configuration.Parts) do
-    local characterPart = self.Character:FindFirstChild(partName)
-    if characterPart and characterPart:IsA('BasePart') then
-        self.Parts[partName] = self:InitializeGhostPart(characterPart)
-    end
-end
-
-end
-
-function GhostManager:CleanupExistingGhosts()
-for _, child in ipairs(workspace:GetChildren()) do
-if child:IsA('Part') and child.Name:match('_Ghost$') then
-child:Destroy()
-end
-end
-end
-
-function GhostManager:CaptureFrameData()
-if not self.Character then return end
-
-local rootPart = self.Character:FindFirstChild('HumanoidRootPart')
-if not rootPart then return end
-
-local relativeTransforms = {}
-for partName, ghostData in pairs(self.Parts) do
-    if ghostData.Original and ghostData.Original.Parent then
-        relativeTransforms[partName] = rootPart.CFrame:ToObjectSpace(ghostData.Original.CFrame)
-    end
-end
-
-local currentTime = tick()
-table.insert(self.FrameHistory, {
-    Timestamp = currentTime,
-    Transform = rootPart.CFrame,
-    Position = rootPart.Position,
-    Velocity = rootPart.Velocity,
-    RelativeTransforms = relativeTransforms
-})
-
-if #self.FrameHistory > 300 then
-    for _ = 1, 80 do table.remove(self.FrameHistory, 1) end
-end
-
-end
-
-function GhostManager:UpdateGhostParts(deltaTime)
-if not self.Character then return end
-
-local rootPart = self.Character:FindFirstChild('HumanoidRootPart')
-if not rootPart then return end
-
-local currentPing = self:CalculateCurrentPing()
-self:UpdateTimingDynamic(currentPing)
-
-local t = Configuration.Timing
-t.DefaultPing = currentPing * t.PingSmoothing + t.DefaultPing * (1 - t.PingSmoothing)
-
-local targetDelay = math.clamp(t.DefaultPing / 2000, t.MinDelay, t.MaxDelay)
-local targetFrame = self:FindTargetFrame(tick() - targetDelay)
-if not targetFrame then return end
-
-local timeDifference = math.clamp(tick() - targetFrame.Timestamp, 0, 0.06)
-local predictedPosition = targetFrame.Position + targetFrame.Velocity * timeDifference * 0.9
-local predictedTransform = CFrame.new(predictedPosition) * (targetFrame.Transform - targetFrame.Transform.Position)
-
-local stabilityFactor = math.clamp(1 - math.abs(currentPing - t.DefaultPing) / 300, 0.25, 1)
-
-for _, ghostData in pairs(self.Parts) do
-    self:UpdateSingleGhostPart(ghostData, targetFrame, predictedTransform, deltaTime, stabilityFactor)
-end
-
-end
-
-function GhostManager:FindTargetFrame(targetTime)
-for i = #self.FrameHistory, 1, -1 do
-if self.FrameHistory[i].Timestamp <= targetTime then
-return self.FrameHistory[i]
-end
-end
-return self.FrameHistory[1]
-end
-
-function GhostManager:UpdateSingleGhostPart(ghostData, targetFrame, predictedTransform, deltaTime, stability)
-local ghostPart = ghostData.Ghost
-local selectionBox = ghostData.Box
-if not ghostPart then return end
-
-local relativeTransform = targetFrame.RelativeTransforms[ghostData.Original.Name]
-local targetCFrame = relativeTransform and predictedTransform * relativeTransform or 
-                    (ghostData.Original and ghostData.Original.CFrame or ghostPart.CFrame)
-
-local positionOffset = (targetCFrame.Position - predictedTransform.Position).Magnitude
-if positionOffset > Configuration.Timing.MaxDistance then
-    local direction = (targetCFrame.Position - predictedTransform.Position).Unit
-    local rotationX, rotationY, rotationZ = targetCFrame:ToEulerAnglesXYZ()
-    targetCFrame = CFrame.new(predictedTransform.Position + direction * Configuration.Timing.MaxDistance) * 
-                  CFrame.Angles(rotationX, rotationY, rotationZ)
-end
-
-local interpolationWeight = math.clamp(deltaTime * 18 * stability, 0, 1)
-ghostPart.CFrame = ghostPart.CFrame:Lerp(targetCFrame, interpolationWeight)
-
-self:ApplyColorEffect(selectionBox)
-
-end
-
-ConfigTab.AddToggle("View Position In Server", false, function(state)
-ghostActive = state
-if state then
-GhostManager:InitializeCharacter()
-RunService.Heartbeat:Connect(function(deltaTime)
-if ghostActive then
-GhostManager:CaptureFrameData()
-GhostManager:UpdateGhostParts(deltaTime)
-end
-end)
-LocalPlayer.CharacterAdded:Connect(function()
-task.wait(0.5)
-if ghostActive then
-GhostManager:InitializeCharacter()
-end
-end)
-else
-ghostActive = false
-GhostManager:CleanupExistingGhosts()
-end
-end)
-
-
-ConfigTab.AddButton("destroy a interface", function() ScreenGui:Destroy() end)
-
-
 
 
 
 local ScriptTab = createTab("Script")
+ 
+ScriptTab.AddSection("Alguns dos Scripts n pod funcionar ")
+
+
 
 ScriptTab.AddButton("wall Hop Hub ", function()
 
