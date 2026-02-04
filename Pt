@@ -1,4 +1,4 @@
--- script create BY ghost
+loadstring(game:HttpGet("https://rawscripts.net/raw/Universal-Script-Anti-gameplay-plaused-98021"))()
 
 local TweenService = game:GetService("TweenService")
 local Players = game:GetService("Players")
@@ -28,7 +28,7 @@ local function notify(title, text, duration)
 
 		local layout = Instance.new("UIListLayout", container)
 		layout.SortOrder = Enum.SortOrder.LayoutOrder
-		layout.Padding = UDim.new(0, 3)
+		layout.Padding = UDim.new(0, 5)
 		layout.VerticalAlignment = Enum.VerticalAlignment.Bottom
 	end
 
@@ -131,18 +131,57 @@ local HttpService = game:GetService("HttpService")
 local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
 ScreenGui.Name = "HavensScriptHub"
 
+local TweenService = game:GetService("TweenService")
+
+--== Botão de abrir aprimorado (sem imagem, estilo código) ==--
 local OpenButton = Instance.new("TextButton", ScreenGui)
-OpenButton.Size = UDim2.new(0, 120, 0, 40)
-OpenButton.Position = UDim2.new(0, 20, 0.5, -20)
-OpenButton.BackgroundColor3 = Color3.fromRGB(120, 0, 0)
-OpenButton.Text = "> open hub ."
-OpenButton.TextColor3 = Color3.new(1, 1, 1)
-OpenButton.Font = Enum.Font.SourceSansBold
-OpenButton.TextSize = 22
-OpenButton.BorderSizePixel = 1
+OpenButton.Size = UDim2.new(0, 130, 0, 45)
+OpenButton.Position = UDim2.new(0, 20, 0.5, -22)
+OpenButton.BackgroundColor3 = Color3.fromRGB(180, 0, 0)
+OpenButton.Text = "> open_hub "
+OpenButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+OpenButton.Font = Enum.Font.Code
+OpenButton.TextSize = 20
+OpenButton.BorderSizePixel = 0
+OpenButton.AutoButtonColor = false
 OpenButton.Active = true
 OpenButton.Draggable = true
+
+--== Canto arredondado ==--
 Instance.new("UICorner", OpenButton).CornerRadius = UDim.new(0, 15)
+
+--== Gradiente ==--
+local Gradient = Instance.new("UIGradient", OpenButton)
+Gradient.Color = ColorSequence.new{
+	ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 80, 80)),
+	ColorSequenceKeypoint.new(1, Color3.fromRGB(180, 0, 0))
+}
+Gradient.Rotation = 90
+
+--== Animação de clique ==--
+OpenButton.MouseButton1Click:Connect(function()
+	local clickTween = TweenService:Create(OpenButton, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+		Size = UDim2.new(0, 125, 0, 42),
+		BackgroundColor3 = Color3.fromRGB(255, 50, 50)
+	})
+	clickTween:Play()
+	clickTween.Completed:Wait()
+
+	local releaseTween = TweenService:Create(OpenButton, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+		Size = UDim2.new(0, 130, 0, 45),
+		BackgroundColor3 = Color3.fromRGB(180, 0, 0)
+	})
+	releaseTween:Play()
+end)
+
+--== Efeito hover ==--
+OpenButton.MouseEnter:Connect(function()
+	TweenService:Create(OpenButton, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(255, 60, 60)}):Play()
+end)
+
+OpenButton.MouseLeave:Connect(function()
+	TweenService:Create(OpenButton, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(180, 0, 0)}):Play()
+end)
 
 local MainFrame = Instance.new("Frame", ScreenGui)
 MainFrame.Size = UDim2.new(0, 450, 0, 300)
@@ -287,17 +326,17 @@ local function createTab(tabName)
 	end)
 
 	local function AddSection(name)
-		local Section = Instance.new("TextLabel", TabContent)
-		Section.Size = UDim2.new(1, -10, 0, 25)
-		Section.BackgroundColor3 = Color3.fromRGB(70, 0, 0)
-		Section.Text = "  " .. name
-		Section.TextColor3 = Color3.new(1, 1, 1)
-		Section.Font = Enum.Font.SourceSansBold
-		Section.TextSize = 18
-		Section.TextXAlignment = Enum.TextXAlignment.Left
-		Section.BorderSizePixel = 1
-		Instance.new("UICorner", Section).CornerRadius = UDim.new(0, 12)
-	end
+	local Section = Instance.new("TextLabel", TabContent)
+	Section.Size = UDim2.new(1, -10, 0, 25)
+	Section.BackgroundColor3 = Color3.fromRGB(70, 0, 0)
+	Section.Text = "-- " .. name .. " --"
+	Section.TextColor3 = Color3.new(1, 1, 1)
+	Section.Font = Enum.Font.SourceSansBold
+	Section.TextSize = 18
+	Section.TextXAlignment = Enum.TextXAlignment.Center
+	Section.BorderSizePixel = 1
+	Instance.new("UICorner", Section).CornerRadius = UDim.new(0, 12)
+end
 
 	local function AddButton(name, callback)
 		local Button = Instance.new("TextButton", TabContent)
@@ -390,7 +429,36 @@ end)
 --== ABA DE CONFIGS ==--
 local ConfigTab = createTab("Configs")
 
-ConfigTab.AddSection("game States")
+ConfigTab.AddButton("FPS | BOOSTER", function()
+
+local paths = {
+    "lobbyCage.decoration",
+    "lobbyCage.winners",
+    "lobbyCage.time",
+    "lobbyCage.stairs",
+    "lobbyCage.store",
+    "lobbyCage.skins",
+    "Water",
+    "lobbyCage.items.owner",
+    "lobbyCage.items.SIGN",
+    "lobbyCage.items",
+    "lobbyCage.changelog",
+    "lobbyCage.donated"
+}
+
+for _, path in ipairs(paths) do
+    local obj = workspace
+    for part in string.gmatch(path, "[^.]+") do
+        obj = obj:FindFirstChild(part)
+        if not obj then break end
+    end
+    if obj then
+        obj:Destroy()
+    end
+end
+
+end)
+
 
 ConfigTab.AddButton("ver FPS", function()
 local RunService = game:GetService("RunService")
@@ -1539,6 +1607,8 @@ end)
 
 local BartTab = createTab("Bart")
 
+BartTab.AddSection("localplayer")
+
 BartTab.AddToggle("Bang", false, function(state)
 	local Players = game:GetService("Players")
 	local speaker = Players.LocalPlayer
@@ -1758,6 +1828,51 @@ end)
 end
 end)
 
+local Lighting = game:GetService("Lighting")
+local active = false
+local originalSettings = nil -- Variável para guardar o estado original do mapa
+
+BartTab.AddToggle("fullbright / brilho", false, function(state)
+    active = state
+
+    if active then
+        -- Só salva as configurações se for a primeira vez que liga
+        if not originalSettings then
+            originalSettings = {
+                Brightness = Lighting.Brightness,
+                ClockTime = Lighting.ClockTime,
+                FogEnd = Lighting.FogEnd,
+                GlobalShadows = Lighting.GlobalShadows,
+                OutdoorAmbient = Lighting.OutdoorAmbient
+            }
+        end
+
+        task.spawn(function()
+            while active do
+                pcall(function()
+                    Lighting.Brightness = 2
+                    Lighting.ClockTime = 14
+                    Lighting.FogEnd = 1e6
+                    Lighting.GlobalShadows = false
+                    Lighting.OutdoorAmbient = Color3.new(1, 1, 1)
+                end)
+                task.wait(0.5)
+            end
+        end)
+    else
+        -- Restaura os valores originais quando desativado
+        if originalSettings then
+            pcall(function()
+                Lighting.Brightness = originalSettings.Brightness
+                Lighting.ClockTime = originalSettings.ClockTime
+                Lighting.FogEnd = originalSettings.FogEnd
+                Lighting.GlobalShadows = originalSettings.GlobalShadows
+                Lighting.OutdoorAmbient = originalSettings.OutdoorAmbient
+            end)
+        end
+    end
+end)
+
 
 
 BartTab.AddButton("flick tela legitimo Mobile", function()
@@ -1901,51 +2016,34 @@ end
 
 end)
 
-local Lighting = game:GetService("Lighting")
-local active = false
-local originalSettings = nil -- Variável para guardar o estado original do mapa
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local LocalPlayer = Players.LocalPlayer
 
-BartTab.AddToggle("fullbright / brilho", false, function(state)
-    active = state
+local spinning = false
+local spinConnection
+local rotation = 0
 
-    if active then
-        -- Só salva as configurações se for a primeira vez que liga
-        if not originalSettings then
-            originalSettings = {
-                Brightness = Lighting.Brightness,
-                ClockTime = Lighting.ClockTime,
-                FogEnd = Lighting.FogEnd,
-                GlobalShadows = Lighting.GlobalShadows,
-                OutdoorAmbient = Lighting.OutdoorAmbient
-            }
-        end
+BartTab.AddToggle("Spin Bot", false, function(state)
+spinning = state
 
-        task.spawn(function()
-            while active do
-                pcall(function()
-                    Lighting.Brightness = 2
-                    Lighting.ClockTime = 14
-                    Lighting.FogEnd = 1e6
-                    Lighting.GlobalShadows = false
-                    Lighting.OutdoorAmbient = Color3.new(1, 1, 1)
-                end)
-                task.wait(0.5)
-            end
-        end)
-    else
-        -- Restaura os valores originais quando desativado
-        if originalSettings then
-            pcall(function()
-                Lighting.Brightness = originalSettings.Brightness
-                Lighting.ClockTime = originalSettings.ClockTime
-                Lighting.FogEnd = originalSettings.FogEnd
-                Lighting.GlobalShadows = originalSettings.GlobalShadows
-                Lighting.OutdoorAmbient = originalSettings.OutdoorAmbient
-            end)
-        end
-    end
+if spinning then
+	spinConnection = RunService.Heartbeat:Connect(function()
+		local char = LocalPlayer.Character
+		if not char or not char:FindFirstChild("Torso") then return end
+
+		local torso = char.Torso
+		rotation = (rotation + 8) % 360
+		torso.CFrame = torso.CFrame * CFrame.Angles(0, math.rad(8), 0)
+	end)
+else
+	if spinConnection then
+		spinConnection:Disconnect()
+		spinConnection = nil
+	end
+end
+
 end)
-
 
 
 
@@ -2181,35 +2279,6 @@ for _, button in ipairs(buttons) do
 	task.wait(0.3)
 	clickButton(button)
 	task.wait(0.5)
-end
-
-end)
-
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local LocalPlayer = Players.LocalPlayer
-
-local spinning = false
-local spinConnection
-local rotation = 0
-
-BartTab.AddToggle("Spin Bot", false, function(state)
-spinning = state
-
-if spinning then
-	spinConnection = RunService.Heartbeat:Connect(function()
-		local char = LocalPlayer.Character
-		if not char or not char:FindFirstChild("Torso") then return end
-
-		local torso = char.Torso
-		rotation = (rotation + 8) % 360
-		torso.CFrame = torso.CFrame * CFrame.Angles(0, math.rad(8), 0)
-	end)
-else
-	if spinConnection then
-		spinConnection:Disconnect()
-		spinConnection = nil
-	end
 end
 
 end)
