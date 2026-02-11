@@ -429,7 +429,26 @@ end)
 
 local ConfigTab = createTab("Configs")
 
+ConfigTab.AddButton("get lora skin (free)", function()
 
+local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local hrp = character:WaitForChild("HumanoidRootPart")
+
+local target = workspace.lobby.Secrets.LORA
+local clickDetector = target:WaitForChild("ClickDetector")
+
+
+hrp.CFrame = target.CFrame + Vector3.new(0, 1, 0)
+
+
+fireclickdetector(clickDetector)
+
+
+end)
+
+
+ConfigTab.AddSection("configs")
 
 ConfigTab.AddButton("ver FPS", function()
 local RunService = game:GetService("RunService")
@@ -940,20 +959,6 @@ ConfigTab.Content.Visible = true
 
 local HomerTab = createTab("Homer")
 
-HomerTab.AddSection("esp")
-
-HomerTab.AddButton("Change Team focus", function()
-	if espMode == "ALL" then
-		espMode = "Bart"
-		notify("esp config", "Bart team only", 1)
-	elseif espMode == "Bart" then
-		espMode = "Homer"
-		notify("esp config", "Homer team only", 1)
-	else
-		espMode = "ALL"
-		notify("esp config", "All players", 1)
-	end
-end)
 
 HomerTab.AddSection("config esp")
 
@@ -1071,15 +1076,12 @@ end
 local function updateESP()
 	for _, p in ipairs(Players:GetPlayers()) do
 		if p ~= LocalPlayer then
-			if espMode == "Bart" and (not p.Team or p.Team.Name ~= "Bart") then
-				removeESP(p)
-				continue
-			elseif espMode == "Homer" and (not p.Team or p.Team.Name ~= "Homer") then
-				removeESP(p)
-				continue
-			end
+			-- Atualiza comportamento conforme o modo atual
+			local allowed = (espMode == "ALL")
+				or (espMode == "Barts" and p.Team and p.Team.Name == "Bart")
+				or (espMode == "Homer" and p.Team and p.Team.Name == "Homer")
 
-			if espActive and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+			if espActive and allowed and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
 				local hrp = p.Character.HumanoidRootPart
 				local highlight = p.Character:FindFirstChild("AuraLine")
 
@@ -1144,12 +1146,7 @@ local function setupPlayer(p)
 	end)
 
 	p:GetPropertyChangedSignal("Team"):Connect(function()
-		if p.Character then
-			removeESP(p)
-			if espActive then
-				createESP(p)
-			end
-		end
+		removeESP(p)
 	end)
 end
 
@@ -1159,8 +1156,13 @@ for _, p in ipairs(Players:GetPlayers()) do
 	end
 end
 
-Players.PlayerAdded:Connect(setupPlayer)
+Players.PlayerAdded:Connect(function(p)
+	setupPlayer(p)
+end)
+
 Players.PlayerRemoving:Connect(removeESP)
+
+
 RunService.RenderStepped:Connect(updateESP)
 
 HomerTab.AddSection(" outros")
@@ -2253,6 +2255,12 @@ end)
 ScriptTab.AddButton("bartender bom script", function()
 
 loadstring(game:HttpGet("https://rawscripts.net/raw/You-VS-Homer-Bartender-78034"))()
+
+end)
+
+ScriptTab.AddButton("Destroy THE SERVER", function()
+
+loadstring(game:HttpGet("https://rawscripts.net/raw/Universal-Script-Super-ring-parts-Modified-105975"))()
 
 end)
 
