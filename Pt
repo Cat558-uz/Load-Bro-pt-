@@ -2274,5 +2274,11 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/Cat558-uz/Ed-Sugestio
 
 end)
 
-sugestaoTab.AddSection("👀 ")
+sugestaoTab.AddSection("aviso ")
+
+sugestaoTab.AddSection("n coloco ideias que n der ")
+
+sugestaoTab.AddSection("como Admin ou fly  ")
+
+sugestaoTab.AddSection("novo ant cheat n deixa ")
 
