@@ -115,26 +115,33 @@ local function notify(title, text, duration)
 	end)
 end
 
-
-
-
-
-notify("aviso", "script por : kit_cynALT", 1)
+notify("warn", "script by kit_cynALT", 1)
 wait(1)
-notify("aviso", "FELIZ DIAS DOS NAMORADOS !", 1)
+notify("warn", "feliz dias dos namorados", 1)
 
---== HAVENS SCRIPT HUB COM SISTEMA DE CONFIGURAÇÃO COMPLETO ==--
-
-local TweenService = game:GetService("TweenService")
-local HttpService = game:GetService("HttpService")
-
-local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
-ScreenGui.Name = "HavensScriptHub"
+-- // Ghost UI Library - Complete LayoutOrder Version \\ --
 
 local TweenService = game:GetService("TweenService")
+local CoreGui = game:GetService("CoreGui")
 
---== Botão de abrir aprimorado (sem imagem, estilo código) ==--
-local OpenButton = Instance.new("TextButton", ScreenGui)
+local Gui = Instance.new("ScreenGui", CoreGui)
+Gui.Name = "GhostUILibrary"
+Gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+--== Função de animação com UIScale ==--
+local function addClickAnim(instance)
+	local scale = Instance.new("UIScale", instance)
+	local function clickEffect()
+		local down = TweenService:Create(scale, TweenInfo.new(0.1, Enum.EasingStyle.Quad), {Scale = 0.95})
+		local up = TweenService:Create(scale, TweenInfo.new(0.2, Enum.EasingStyle.Back), {Scale = 1})
+		down:Play()
+		down.Completed:Connect(function() up:Play() end)
+	end
+	return clickEffect
+end
+
+--== BOTÃO DE ABRIR HUB ==--
+local OpenButton = Instance.new("TextButton", Gui)
 OpenButton.Size = UDim2.new(0, 130, 0, 45)
 OpenButton.Position = UDim2.new(0, 20, 0.5, -22)
 OpenButton.BackgroundColor3 = Color3.fromRGB(180, 0, 0)
@@ -144,13 +151,8 @@ OpenButton.Font = Enum.Font.Code
 OpenButton.TextSize = 20
 OpenButton.BorderSizePixel = 0
 OpenButton.AutoButtonColor = false
-OpenButton.Active = true
 OpenButton.Draggable = true
-
---== Canto arredondado ==--
 Instance.new("UICorner", OpenButton).CornerRadius = UDim.new(0, 15)
-
---== Gradiente ==--
 local Gradient = Instance.new("UIGradient", OpenButton)
 Gradient.Color = ColorSequence.new{
 	ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 80, 80)),
@@ -158,141 +160,77 @@ Gradient.Color = ColorSequence.new{
 }
 Gradient.Rotation = 90
 
---== Animação de clique ==--
-OpenButton.MouseButton1Click:Connect(function()
-	local clickTween = TweenService:Create(OpenButton, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-		Size = UDim2.new(0, 125, 0, 42),
-		BackgroundColor3 = Color3.fromRGB(255, 50, 50)
-	})
-	clickTween:Play()
-	clickTween.Completed:Wait()
-
-	local releaseTween = TweenService:Create(OpenButton, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-		Size = UDim2.new(0, 130, 0, 45),
-		BackgroundColor3 = Color3.fromRGB(180, 0, 0)
-	})
-	releaseTween:Play()
-end)
-
---== Efeito hover ==--
+local openClick = addClickAnim(OpenButton)
 OpenButton.MouseEnter:Connect(function()
 	TweenService:Create(OpenButton, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(255, 60, 60)}):Play()
 end)
-
 OpenButton.MouseLeave:Connect(function()
 	TweenService:Create(OpenButton, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(180, 0, 0)}):Play()
 end)
 
-local MainFrame = Instance.new("Frame", ScreenGui)
-MainFrame.Size = UDim2.new(0, 450, 0, 300)
-MainFrame.Position = UDim2.new(0.5, -225, 0.5, -150)
+--== FRAME PRINCIPAL ==--
+local MainFrame = Instance.new("Frame", Gui)
+MainFrame.Size = UDim2.new(0, 520, 0, 340)
+MainFrame.Position = UDim2.new(0.5, -260, 0.5, -170)
 MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
 MainFrame.BorderSizePixel = 0
 MainFrame.Visible = false
 MainFrame.Active = true
 MainFrame.Draggable = true
-Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 30)
+Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 25)
 
 local Title = Instance.new("TextLabel", MainFrame)
 Title.Size = UDim2.new(1, 0, 0, 35)
 Title.BackgroundColor3 = Color3.fromRGB(120, 0, 0)
-Title.Text = "Havens Script | you vs homer"
+Title.Text = "Havens hub"
 Title.TextColor3 = Color3.new(1, 1, 1)
 Title.Font = Enum.Font.SourceSansBold
 Title.TextSize = 22
-Title.BorderSizePixel = 0
 Instance.new("UICorner", Title).CornerRadius = UDim.new(0, 10)
 
 local CloseButton = Instance.new("TextButton", Title)
 CloseButton.Size = UDim2.new(0, 60, 0, 30)
 CloseButton.Position = UDim2.new(1, -65, 0, 3)
 CloseButton.BackgroundColor3 = Color3.fromRGB(90, 0, 0)
-CloseButton.Text = "X"
+CloseButton.Text = "fechar"
 CloseButton.TextColor3 = Color3.new(1, 1, 1)
 CloseButton.Font = Enum.Font.SourceSansBold
 CloseButton.TextSize = 18
-CloseButton.BorderSizePixel = 0
 Instance.new("UICorner", CloseButton).CornerRadius = UDim.new(0, 8)
+local closeClick = addClickAnim(CloseButton)
+CloseButton.MouseButton1Click:Connect(function()
+	closeClick()
+	MainFrame.Visible = false
+end)
 
-local TabsFrame = Instance.new("Frame", MainFrame)
-TabsFrame.Size = UDim2.new(0, 120, 1, -35)
+--== TABS ==--
+local TabsFrame = Instance.new("ScrollingFrame", MainFrame)
+TabsFrame.Size = UDim2.new(0, 130, 1, -35)
 TabsFrame.Position = UDim2.new(0, 0, 0, 35)
 TabsFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-TabsFrame.BorderSizePixel = 0
+TabsFrame.ScrollBarThickness = 4
 Instance.new("UICorner", TabsFrame).CornerRadius = UDim.new(0, 10)
 
 local ContentFrame = Instance.new("Frame", MainFrame)
-ContentFrame.Size = UDim2.new(1, -130, 1, -40)
-ContentFrame.Position = UDim2.new(0, 125, 0, 40)
+ContentFrame.Size = UDim2.new(1, -140, 1, -40)
+ContentFrame.Position = UDim2.new(0, 135, 0, 40)
 ContentFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
-ContentFrame.BorderSizePixel = 0
 Instance.new("UICorner", ContentFrame).CornerRadius = UDim.new(0, 10)
 
 local TabList = Instance.new("UIListLayout", TabsFrame)
-TabList.Padding = UDim.new(0, 2)
-TabList.FillDirection = Enum.FillDirection.Vertical
-TabList.SortOrder = Enum.SortOrder.LayoutOrder
-TabList.VerticalAlignment = Enum.VerticalAlignment.Top
+TabList.Padding = UDim.new(0, 5)
 
---== SISTEMA DE CONFIGURAÇÃO ==--
-
-local configs = {}
-local currentConfig = "default"
-
-local function MakeConfig(name)
-	local folder = "HavensConfigs"
-	if not isfolder(folder) then makefolder(folder) end
-	local path = folder .. "/" .. name .. ".json"
-	writefile(path, HttpService:JSONEncode(configs))
-	print("g")
-end
-
-local function LoadConfig(name)
-	local path = "HavensConfigs/" .. name .. ".json"
-	if not isfile(path) then
-		notify("System", "file not founded: " .. name, 3)
-		return
-	end
-	local data = HttpService:JSONDecode(readfile(path))
-	configs = data
-	notify("System", "config: loaded " .. name, 3)
-
-	-- aplicar aos toggles e textbox
-	for _, tab in pairs(ContentFrame:GetChildren()) do
-		if tab:IsA("ScrollingFrame") then
-			for _, item in pairs(tab:GetChildren()) do
-				if item:IsA("TextButton") and item:FindFirstChildWhichIsA("UICorner") then
-					local key = item.Name
-					if configs[key] ~= nil then
-						local val = configs[key]
-						if typeof(val) == "boolean" then
-							item.Text = key .. " : " .. (val and "ON" or "OFF")
-							item.BackgroundColor3 = val and Color3.fromRGB(150,0,0) or Color3.fromRGB(90,0,0)
-						end
-					end
-				elseif item:IsA("TextBox") then
-					local key = item.Name
-					if configs[key] ~= nil then
-						item.Text = tostring(configs[key])
-					end
-				end
-			end
-		end
-	end
-end
-
---== SISTEMA DE CRIAÇÃO DE TABS ==--
-local function createTab(tabName)
+--== SISTEMA DE TABS ==--
+local function createTab(name)
 	local TabButton = Instance.new("TextButton", TabsFrame)
 	TabButton.Size = UDim2.new(1, -10, 0, 30)
-	TabButton.Position = UDim2.new(0, 5, 0, 0)
 	TabButton.BackgroundColor3 = Color3.fromRGB(50, 0, 0)
-	TabButton.Text = tabName
+	TabButton.Text = name
 	TabButton.TextColor3 = Color3.new(1, 1, 1)
 	TabButton.Font = Enum.Font.SourceSansBold
 	TabButton.TextSize = 18
-	TabButton.BorderSizePixel = 0
-	Instance.new("UICorner", TabButton).CornerRadius = UDim.new(0, 13)
+	Instance.new("UICorner", TabButton).CornerRadius = UDim.new(0, 10)
+	local tabClick = addClickAnim(TabButton)
 
 	local TabContent = Instance.new("ScrollingFrame", ContentFrame)
 	TabContent.Size = UDim2.new(1, -10, 1, -10)
@@ -304,17 +242,18 @@ local function createTab(tabName)
 
 	local ListLayout = Instance.new("UIListLayout", TabContent)
 	ListLayout.Padding = UDim.new(0, 10)
+	ListLayout.FillDirection = Enum.FillDirection.Vertical
 	ListLayout.SortOrder = Enum.SortOrder.LayoutOrder
-
 	ListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
 		TabContent.CanvasSize = UDim2.new(0, 0, 0, ListLayout.AbsoluteContentSize.Y + 10)
 	end)
 
+	local elementIndex = 0 -- contador de ordem
+
 	TabButton.MouseButton1Click:Connect(function()
+		tabClick()
 		for _, v in pairs(ContentFrame:GetChildren()) do
-			if v:IsA("ScrollingFrame") then
-				v.Visible = false
-			end
+			if v:IsA("ScrollingFrame") then v.Visible = false end
 		end
 		for _, v in pairs(TabsFrame:GetChildren()) do
 			if v:IsA("TextButton") then
@@ -325,86 +264,83 @@ local function createTab(tabName)
 		TabContent.Visible = true
 	end)
 
-	local function AddSection(name)
-	local Section = Instance.new("TextLabel", TabContent)
-	Section.Size = UDim2.new(1, -10, 0, 25)
-	Section.BackgroundColor3 = Color3.fromRGB(70, 0, 0)
-	Section.Text = "-- " .. name .. " --"
-	Section.TextColor3 = Color3.new(1, 1, 1)
-	Section.Font = Enum.Font.SourceSansBold
-	Section.TextSize = 18
-	Section.TextXAlignment = Enum.TextXAlignment.Center
-	Section.BorderSizePixel = 1
-	Instance.new("UICorner", Section).CornerRadius = UDim.new(0, 12)
-end
-
-	local function AddButton(name, callback)
-		local Button = Instance.new("TextButton", TabContent)
-		Button.Size = UDim2.new(1, -10, 0, 30)
-		Button.BackgroundColor3 = Color3.fromRGB(90, 0, 0)
-		Button.Text = name
-		Button.TextColor3 = Color3.new(1, 1, 1)
-		Button.Font = Enum.Font.SourceSans
-		Button.TextSize = 18
-		Button.BorderSizePixel = 0
-		Button.Name = name
-		Instance.new("UICorner", Button).CornerRadius = UDim.new(0, 12)
-
-		Button.MouseButton1Click:Connect(function()
-			TweenService:Create(Button, TweenInfo.new(0.1), {BackgroundColor3 = Color3.fromRGB(150, 0, 0)}):Play()
-			task.wait(0.1)
-			TweenService:Create(Button, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(90, 0, 0)}):Play()
-			pcall(callback)
-		end)
+	local function AddSection(title)
+		elementIndex = elementIndex + 1
+		local label = Instance.new("TextLabel", TabContent)
+		label.Size = UDim2.new(1, -10, 0, 30)
+		label.BackgroundColor3 = Color3.fromRGB(70, 0, 0)
+		label.Text = title
+		label.TextColor3 = Color3.new(1, 1, 1)
+		label.Font = Enum.Font.SourceSansBold
+		label.TextSize = 18
+		label.TextXAlignment = Enum.TextXAlignment.Center
+		Instance.new("UICorner", label).CornerRadius = UDim.new(0, 10)
+		label.LayoutOrder = elementIndex
+		return label
 	end
 
-	local function AddToggle(name, default, callback)
-		local Toggle = Instance.new("TextButton", TabContent)
-		Toggle.Size = UDim2.new(1, -10, 0, 30)
-		Toggle.BackgroundColor3 = default and Color3.fromRGB(150, 0, 0) or Color3.fromRGB(90, 0, 0)
-		Toggle.TextColor3 = Color3.new(1, 1, 1)
-		Toggle.Font = Enum.Font.SourceSans
-		Toggle.TextSize = 18
-		Toggle.BorderSizePixel = 0
-		Toggle.Name = name
-		Instance.new("UICorner", Toggle).CornerRadius = UDim.new(0, 8)
-
-		local toggled = default
-		Toggle.Text = name .. " : " .. (toggled and "ON" or "OFF")
-		configs[name] = toggled
-
-		Toggle.MouseButton1Click:Connect(function()
-			toggled = not toggled
-			configs[name] = toggled
-			TweenService:Create(Toggle, TweenInfo.new(0.2), {
-				BackgroundColor3 = toggled and Color3.fromRGB(150, 0, 0) or Color3.fromRGB(90, 0, 0)
-			}):Play()
-			Toggle.Text = name .. " : " .. (toggled and "ON" or "OFF")
-			pcall(callback, toggled)
-			MakeConfig(currentConfig)
+	local function AddButton(title, callback)
+		elementIndex = elementIndex + 1
+		local btn = Instance.new("TextButton", TabContent)
+		btn.Size = UDim2.new(1, -10, 0, 30)
+		btn.BackgroundColor3 = Color3.fromRGB(90, 0, 0)
+		btn.Text = title
+		btn.TextColor3 = Color3.new(1, 1, 1)
+		btn.Font = Enum.Font.SourceSans
+		btn.TextSize = 18
+		Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 8)
+		btn.LayoutOrder = elementIndex
+		local btnClick = addClickAnim(btn)
+		btn.MouseButton1Click:Connect(function()
+			btnClick()
+			pcall(callback)
 		end)
+		return btn
+	end
+
+	local function AddToggle(title, default, callback)
+		elementIndex = elementIndex + 1
+		local toggle = Instance.new("TextButton", TabContent)
+		toggle.Size = UDim2.new(1, -10, 0, 30)
+		toggle.BackgroundColor3 = default and Color3.fromRGB(150, 0, 0) or Color3.fromRGB(90, 0, 0)
+		toggle.TextColor3 = Color3.new(1, 1, 1)
+		toggle.Font = Enum.Font.SourceSans
+		toggle.TextSize = 18
+		Instance.new("UICorner", toggle).CornerRadius = UDim.new(0, 8)
+		toggle.LayoutOrder = elementIndex
+		local toggled = default
+		toggle.Text = title .. " : " .. (toggled and "ON" or "OFF")
+		local togClick = addClickAnim(toggle)
+		toggle.MouseButton1Click:Connect(function()
+			togClick()
+			toggled = not toggled
+			toggle.BackgroundColor3 = toggled and Color3.fromRGB(150, 0, 0) or Color3.fromRGB(90, 0, 0)
+			toggle.Text = title .. " : " .. (toggled and "ON" or "OFF")
+			pcall(callback, toggled)
+		end)
+		return toggle
 	end
 
 	local function AddTextBox(placeholder, callback)
-		local Box = Instance.new("TextBox", TabContent)
-		Box.Size = UDim2.new(1, -10, 0, 30)
-		Box.BackgroundColor3 = Color3.fromRGB(60, 0, 0)
-		Box.PlaceholderText = placeholder
-		Box.Text = ""
-		Box.TextColor3 = Color3.new(1, 1, 1)
-		Box.Font = Enum.Font.SourceSans
-		Box.TextSize = 18
-		Box.BorderSizePixel = 0
-		Box.Name = placeholder
-		Instance.new("UICorner", Box).CornerRadius = UDim.new(0, 8)
-
-		Box.FocusLost:Connect(function(enterPressed)
-			if enterPressed then
-				configs[placeholder] = Box.Text
-				MakeConfig(currentConfig)
-				pcall(callback, Box.Text)
+		elementIndex = elementIndex + 1
+		local box = Instance.new("TextBox", TabContent)
+		box.Size = UDim2.new(1, -10, 0, 30)
+		box.BackgroundColor3 = Color3.fromRGB(60, 0, 0)
+		box.PlaceholderText = placeholder
+		box.Text = ""
+		box.TextColor3 = Color3.new(1, 1, 1)
+		box.Font = Enum.Font.SourceSans
+		box.TextSize = 18
+		Instance.new("UICorner", box).CornerRadius = UDim.new(0, 8)
+		box.LayoutOrder = elementIndex
+		local boxClick = addClickAnim(box)
+		box.FocusLost:Connect(function(enter)
+			if enter then
+				boxClick()
+				pcall(callback, box.Text)
 			end
 		end)
+		return box
 	end
 
 	return {
@@ -416,13 +352,15 @@ end
 	}
 end
 
---== CONTROLES DE ABERTURA ==--
-OpenButton.MouseButton1Click:Connect(function()
-	MainFrame.Visible = not MainFrame.Visible
-end)
+--== FUNÇÃO DE TROCAR TÍTULO ==--
+local function SetTitle(newTitle)
+	Title.Text = newTitle
+end
 
-CloseButton.MouseButton1Click:Connect(function()
-	MainFrame.Visible = false
+--== ABRIR / FECHAR HUB ==--
+OpenButton.MouseButton1Click:Connect(function()
+	openClick()
+	MainFrame.Visible = not MainFrame.Visible
 end)
 
 
@@ -975,27 +913,40 @@ local showDistance = false
 local showTeam = false
 
 --== BOTÕES E TOGGLES ==--
-HomerTab.AddToggle("Ver todos / ESP", false, function(val)
-	espActive = val
+HomerTab.AddToggle("Ver todos / ESP", false, function(v)
+	espActive = v
+	if not v then
+		for _, p in ipairs(Players:GetPlayers()) do
+			if p ~= LocalPlayer then
+				local char = p.Character
+				if char then
+					local h = char:FindFirstChild("AuraLine")
+					if h then h:Destroy() end
+					local hrp = char:FindFirstChild("HumanoidRootPart")
+					if hrp and hrp:FindFirstChild("NameTag") then
+						hrp.NameTag:Destroy()
+					end
+				end
+			end
+		end
+	end
 end)
 
-HomerTab.AddToggle("Show Nickname", false, function(val)
-	showNickname = val
+HomerTab.AddToggle("Show Nickname", false, function(v)
+	showNickname = v
 end)
 
-HomerTab.AddToggle("Show Name", false, function(val)
-	showName = val
+HomerTab.AddToggle("Show Name", false, function(v)
+	showName = v
 end)
 
-HomerTab.AddToggle("Show Distance", false, function(val)
-	showDistance = val
+HomerTab.AddToggle("Show Distance", false, function(v)
+	showDistance = v
 end)
 
-HomerTab.AddToggle("Show Team", false, function(val)
-	showTeam = val
+HomerTab.AddToggle("Show Team", false, function(v)
+	showTeam = v
 end)
-
-
 
 --== FUNÇÕES ==--
 local function getTeamColor(p)
@@ -1010,6 +961,7 @@ local function createESP(p)
 	local char = p.Character
 	local hrp = char:FindFirstChild("HumanoidRootPart")
 
+	-- Highlight (outline)
 	local highlight = Instance.new("Highlight")
 	highlight.Name = "AuraLine"
 	highlight.FillTransparency = 1
@@ -1017,6 +969,7 @@ local function createESP(p)
 	highlight.OutlineColor = getTeamColor(p)
 	highlight.Parent = char
 
+	-- Billboard (textos)
 	local billboard = Instance.new("BillboardGui")
 	billboard.Name = "NameTag"
 	billboard.AlwaysOnTop = true
@@ -1074,17 +1027,16 @@ local function removeESP(p)
 end
 
 local function updateESP()
+	if not espActive then return end
 	for _, p in ipairs(Players:GetPlayers()) do
 		if p ~= LocalPlayer then
-			-- Atualiza comportamento conforme o modo atual
 			local allowed = (espMode == "ALL")
 				or (espMode == "Barts" and p.Team and p.Team.Name == "Bart")
 				or (espMode == "Homer" and p.Team and p.Team.Name == "Homer")
 
-			if espActive and allowed and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+			if allowed and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
 				local hrp = p.Character.HumanoidRootPart
 				local highlight = p.Character:FindFirstChild("AuraLine")
-
 				if not highlight then
 					createESP(p)
 				end
@@ -1094,7 +1046,6 @@ local function updateESP()
 					local nameLabel = billboard:FindFirstChild("NameLabel")
 					local distLabel = billboard:FindFirstChild("DistLabel")
 					local teamLabel = billboard:FindFirstChild("TeamLabel")
-
 					local color = getTeamColor(p)
 					if highlight then
 						highlight.OutlineColor = color
@@ -1106,24 +1057,32 @@ local function updateESP()
 							text = text .. (p.DisplayName or p.Name)
 						end
 						if showName and p.DisplayName and p.DisplayName ~= p.Name then
-							if text ~= "" then text = text .. " (" .. p.Name .. ")" else text = p.Name end
+							if text ~= "" then
+								text = text .. " (" .. p.Name .. ")"
+							else
+								text = p.Name
+							end
 						end
 						nameLabel.Text = text
 						nameLabel.TextColor3 = color
 					end
 
 					local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-					if distLabel and showDistance and root then
-						local dist = math.floor((root.Position - hrp.Position).Magnitude)
-						distLabel.Text = "[" .. dist .. " Studs]"
-					else
-						distLabel.Text = ""
+					if distLabel then
+						if showDistance and root then
+							local dist = math.floor((root.Position - hrp.Position).Magnitude)
+							distLabel.Text = "[" .. dist .. " Studs]"
+						else
+							distLabel.Text = ""
+						end
 					end
 
-					if teamLabel and showTeam then
-						teamLabel.Text = p.Team and p.Team.Name or "No Team"
-					else
-						teamLabel.Text = ""
+					if teamLabel then
+						if showTeam then
+							teamLabel.Text = p.Team and p.Team.Name or "No Team"
+						else
+							teamLabel.Text = ""
+						end
 					end
 				end
 			else
@@ -1144,7 +1103,6 @@ local function setupPlayer(p)
 	p.CharacterAdded:Connect(function(char)
 		onCharacterAdded(p, char)
 	end)
-
 	p:GetPropertyChangedSignal("Team"):Connect(function()
 		removeESP(p)
 	end)
@@ -1156,12 +1114,8 @@ for _, p in ipairs(Players:GetPlayers()) do
 	end
 end
 
-Players.PlayerAdded:Connect(function(p)
-	setupPlayer(p)
-end)
-
+Players.PlayerAdded:Connect(setupPlayer)
 Players.PlayerRemoving:Connect(removeESP)
-
 
 RunService.RenderStepped:Connect(updateESP)
 
