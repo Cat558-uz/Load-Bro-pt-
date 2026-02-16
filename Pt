@@ -6,7 +6,6 @@ local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
 local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 
-
 local function notify(title, text, duration)
 	duration = duration or 2
 	local mainGui = PlayerGui:FindFirstChild("GhostNotifications")
@@ -22,23 +21,40 @@ local function notify(title, text, duration)
 	if not container then
 		container = Instance.new("Frame", mainGui)
 		container.Name = "Container"
-		container.Size = UDim2.new(0, 270, 0.5, 0)
-		container.Position = UDim2.new(1, -280, 0.45, 0)
+		container.Size = UDim2.new(0, 270, 1, 0)
+		container.Position = UDim2.new(1, -280, 0, 60)
 		container.BackgroundTransparency = 1
 
 		local layout = Instance.new("UIListLayout", container)
 		layout.SortOrder = Enum.SortOrder.LayoutOrder
-		layout.Padding = UDim.new(0, 5)
-		layout.VerticalAlignment = Enum.VerticalAlignment.Bottom
+		layout.Padding = UDim.new(0, 6)
+		layout.VerticalAlignment = Enum.VerticalAlignment.Top
 	end
+
+	-- Detecta tamanho do texto
+	local function getTextHeight(txt)
+		local temp = Instance.new("TextLabel")
+		temp.Size = UDim2.new(1, -20, 0, 0)
+		temp.Font = Enum.Font.Gotham
+		temp.TextSize = 15
+		temp.TextWrapped = true
+		temp.Text = txt
+		temp.Parent = PlayerGui
+		local height = temp.TextBounds.Y
+		temp:Destroy()
+		return math.clamp(height + 55, 65, 150)
+	end
+
+	local frameHeight = getTextHeight(text)
 
 	local frame = Instance.new("Frame")
 	frame.Name = "Notification"
-	frame.Size = UDim2.new(1, 0, 0, 65)
+	frame.Size = UDim2.new(1, 0, 0, frameHeight)
 	frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 	frame.BackgroundTransparency = 0.25
 	frame.BorderSizePixel = 0
 	frame.ClipsDescendants = true
+	frame.LayoutOrder = -os.time() -- Faz novas subirem
 	frame.Parent = container
 	Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 10)
 
@@ -57,7 +73,7 @@ local function notify(title, text, duration)
 	titleLabel.BackgroundTransparency = 1
 
 	local textLabel = Instance.new("TextLabel", frame)
-	textLabel.Size = UDim2.new(1, -20, 0, 25)
+	textLabel.Size = UDim2.new(1, -20, 0, frameHeight - 40)
 	textLabel.Position = UDim2.new(0, 10, 0, 27)
 	textLabel.Text = text
 	textLabel.TextColor3 = Color3.fromRGB(220, 220, 220)
@@ -65,6 +81,7 @@ local function notify(title, text, duration)
 	textLabel.TextSize = 15
 	textLabel.TextWrapped = true
 	textLabel.TextXAlignment = Enum.TextXAlignment.Left
+	textLabel.TextYAlignment = Enum.TextYAlignment.Top
 	textLabel.BackgroundTransparency = 1
 
 	local timeLabel = Instance.new("TextLabel", frame)
@@ -77,20 +94,20 @@ local function notify(title, text, duration)
 	timeLabel.TextXAlignment = Enum.TextXAlignment.Right
 	timeLabel.BackgroundTransparency = 1
 
-	--== SOM DA NOTIFICAÇÃO ==--
 	local sound = Instance.new("Sound", frame)
 	sound.SoundId = "rbxassetid://18595195017"
 	sound.Volume = 1
 	sound.PlayOnRemove = true
-	sound:Destroy() -- tocará instantaneamente ao remover
+	sound:Destroy()
 
-	--== ANIMAÇÃO DE ENTRADA ==--
-	frame.Position = UDim2.new(1, 280, 0, 0)
+	frame.Position = UDim2.new(1, 300, 0, 0)
 	frame.BackgroundTransparency = 1
-	TweenService:Create(frame, TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+
+	local tweenIn = TweenService:Create(frame, TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
 		Position = UDim2.new(0, 0, 0, 0),
 		BackgroundTransparency = 0.25
-	}):Play()
+	})
+	tweenIn:Play()
 
 	task.spawn(function()
 		local start = tick()
@@ -101,11 +118,10 @@ local function notify(title, text, duration)
 		end
 	end)
 
-	--== SAÍDA AUTOMÁTICA ==--
 	task.delay(duration, function()
 		if frame and frame.Parent then
 			local tweenOut = TweenService:Create(frame, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
-				Position = UDim2.new(1, 280, 0, 0),
+				Position = UDim2.new(1, 300, 0, 0),
 				BackgroundTransparency = 1
 			})
 			tweenOut:Play()
@@ -266,12 +282,12 @@ local function createTab(name)
 	local function AddSection(title)
 		elementIndex = elementIndex + 1
 		local label = Instance.new("TextLabel", TabContent)
-		label.Size = UDim2.new(1, -10, 0, 30)
+		label.Size = UDim2.new(1, -10, 0, 20)
 		label.BackgroundColor3 = Color3.fromRGB(70, 0, 0)
 		label.Text = title
 		label.TextColor3 = Color3.new(1, 1, 1)
 		label.Font = Enum.Font.SourceSansBold
-		label.TextSize = 15
+		label.TextSize = 16
 		label.TextXAlignment = Enum.TextXAlignment.Center
 		Instance.new("UICorner", label).CornerRadius = UDim.new(0, 10)
 		label.LayoutOrder = elementIndex
@@ -396,115 +412,70 @@ end)
 
 
 
-ConfigTab.AddToggle("ver FPS jogo e MS", false, function(state)
-local RunService = game:GetService("RunService")
-local CoreGui = game:GetService("CoreGui")
-local UserInputService = game:GetService("UserInputService")
+ConfigTab.AddToggle("Show FPS and MS", false, function(state)
+	local RunService = game:GetService("RunService")
+	local CoreGui = game:GetService("CoreGui")
 
-local fpsGui = CoreGui:FindFirstChild("GhostFPSGui")
-local running = state
+	if getgenv().ShowFpsRunning == nil then
+		getgenv().ShowFpsRunning = false
+	end
 
-if state then
-    if not fpsGui then
-        fpsGui = Instance.new("ScreenGui", CoreGui)
-        fpsGui.Name = "GhostFPSGui"
+	if state then
+		if getgenv().ShowFpsRunning then return end -- evita duplicar
+		getgenv().ShowFpsRunning = true
 
-        -- brih
-        local mainFrame = Instance.new("Frame", fpsGui)
-        mainFrame.Name = "MainFrame"
-        mainFrame.Size = UDim2.new(0, 180, 0, 50)
-        mainFrame.Position = UDim2.new(0, 10, 0, 10)
-        mainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-        mainFrame.BorderSizePixel = 0
-        Instance.new("UICorner", mainFrame).CornerRadius = UDim.new(0, 6)
+		local fpsGui = Instance.new("ScreenGui")
+		fpsGui.Name = "GhostFPSGui"
+		fpsGui.Parent = CoreGui
+		fpsGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
-        -- br4
-        local dragBar = Instance.new("Frame", mainFrame)
-        dragBar.Name = "DragBar"
-        dragBar.Size = UDim2.new(1, 0, 0, 20)
-        dragBar.BackgroundColor3 = Color3.fromRGB(50, 0, 0)
-        dragBar.BorderSizePixel = 0
-        Instance.new("UICorner", dragBar).CornerRadius = UDim.new(0, 6)
+		local mainFrame = Instance.new("Frame")
+		mainFrame.Size = UDim2.new(0, 150, 0, 30)
+		mainFrame.Position = UDim2.new(1, -170, 0, 123)
+		mainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+		mainFrame.BackgroundTransparency = 0.6
+		mainFrame.BorderSizePixel = 0
+		mainFrame.Parent = fpsGui
+		Instance.new("UICorner", mainFrame).CornerRadius = UDim.new(0, 6)
 
-        local dragLabel = Instance.new("TextLabel", dragBar)
-        dragLabel.Size = UDim2.new(1, 0, 1, 0)
-        dragLabel.BackgroundTransparency = 1
-        dragLabel.Font = Enum.Font.SourceSansBold
-        dragLabel.TextColor3 = Color3.new(1, 1, 1)
-        dragLabel.TextSize = 16
-        dragLabel.Text = "Drag"
+		local infoLabel = Instance.new("TextLabel")
+		infoLabel.Size = UDim2.new(1, 0, 1, 0)
+		infoLabel.BackgroundTransparency = 1
+		infoLabel.TextColor3 = Color3.new(1, 1, 1)
+		infoLabel.Font = Enum.Font.Code
+		infoLabel.TextSize = 16
+		infoLabel.Text = "Fps: 0 | Ms: 0"
+		infoLabel.Parent = mainFrame
 
-        -- nigg
-        local infoBar = Instance.new("TextLabel", mainFrame)
-        infoBar.Name = "InfoBar"
-        infoBar.Size = UDim2.new(1, 0, 0, 25)
-        infoBar.Position = UDim2.new(0, 0, 0, 25)
-        infoBar.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
-        infoBar.TextColor3 = Color3.new(1, 1, 1)
-        infoBar.Font = Enum.Font.Code
-        infoBar.TextSize = 15
-        infoBar.Text = "FPS: 0 | MS: 0"
-        Instance.new("UICorner", infoBar).CornerRadius = UDim.new(0, 6)
+		task.spawn(function()
+			local lastTime = tick()
+			local frames = 0
+			local fps = 0
+			while getgenv().ShowFpsRunning and fpsGui and fpsGui.Parent do
+				RunService.RenderStepped:Wait()
+				frames += 1
+				local now = tick()
+				local delta = now - lastTime
+				if delta >= 1 then
+					fps = frames
+					frames = 0
+					lastTime = now
+				end
+				local ms = math.floor((1 / math.max(fps, 1)) * 1000)
+				infoLabel.Text = string.format("Fps: %d | Ms: %d", fps, ms)
+			end
 
-        -- fraaaaaaaggg
-        local dragging, dragInput, dragStart, startPos
-
-        local function update(input)
-            local delta = input.Position - dragStart
-            mainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X,
-                startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-        end
-
-        dragBar.InputBegan:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-                dragging = true
-                dragStart = input.Position
-                startPos = mainFrame.Position
-                input.Changed:Connect(function()
-                    if input.UserInputState == Enum.UserInputState.End then
-                        dragging = false
-                    end
-                end)
-            end
-        end)
-
-        dragBar.InputChanged:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-                dragInput = input
-            end
-        end)
-
-        UserInputService.InputChanged:Connect(function(input)
-            if input == dragInput and dragging then
-                update(input)
-            end
-        end)
-
-        -- Sistema FPS / MS
-        task.spawn(function()
-            local last = tick()
-            local frameCount = 0
-            while running and fpsGui and fpsGui.Parent do
-                frameCount += 1
-                local now = tick()
-                if now - last >= 1 then
-                    local fps = frameCount
-                    frameCount = 0
-                    last = now
-                    local delta = RunService.RenderStepped:Wait()
-                    local ms = math.floor(delta * 1000)
-                    infoBar.Text = "FPS: " .. fps .. " | MS: " .. ms
-                end
-                RunService.RenderStepped:Wait()
-            end
-        end)
-    end
-else
-    if fpsGui then
-        fpsGui:Destroy()
-    end
-end
-
+			if fpsGui then
+				fpsGui:Destroy()
+			end
+		end)
+	else
+		getgenv().ShowFpsRunning = false
+		local old = CoreGui:FindFirstChild("GhostFPSGui")
+		if old then
+			old:Destroy()
+		end
+	end
 end)
 
 --// VIEW BODY
@@ -546,7 +517,7 @@ end
 highlights = {}
 end
 
-ConfigTab.AddToggle("ver corpo seu", false, function(state)
+ConfigTab.AddToggle("ver corpo Hitbox", false, function(state)
 viewBodyActive = state
 if state then
 enableViewBody()
@@ -1179,6 +1150,54 @@ HomerTab.AddToggle("ver Hitbox dos jogadores", false, function(state)
 end)
 
 
+HomerTab.AddToggle("ver o  Homer [ 1 ]", false, function(state)
+	local Players = game:GetService("Players")
+	local Workspace = game:GetService("Workspace")
+	local LocalPlayer = Players.LocalPlayer
+	local Camera = Workspace.CurrentCamera
+
+	if getgenv().ViewingHomer == nil then
+		getgenv().ViewingHomer = false
+	end
+
+	if state then
+		getgenv().ViewingHomer = true
+
+		task.spawn(function()
+			while getgenv().ViewingHomer do
+				local target = nil
+				for _, player in ipairs(Players:GetPlayers()) do
+					if player.Team and player.Team.Name == "Homer" and player ~= LocalPlayer then
+						target = player
+						break
+					end
+				end
+
+				if target and target.Character and target.Character:FindFirstChild("Humanoid") and target.Character:FindFirstChild("HumanoidRootPart") then
+					local humanoid = target.Character:FindFirstChildOfClass("Humanoid")
+					if humanoid then
+						Camera.CameraSubject = humanoid
+						Camera.CameraType = Enum.CameraType.Custom
+					end
+				end
+
+				task.wait(0.2)
+			end
+			-- resetar câmera
+			Camera.CameraSubject = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+			Camera.CameraType = Enum.CameraType.Custom
+		end)
+	else
+		getgenv().ViewingHomer = false
+		local Camera = Workspace.CurrentCamera
+		local LocalPlayer = Players.LocalPlayer
+		if LocalPlayer.Character then
+			Camera.CameraSubject = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+			Camera.CameraType = Enum.CameraType.Custom
+		end
+	end
+end)
+
 
 --== AUTO KILL ==--
 local autoKill = false
@@ -1622,60 +1641,73 @@ BartTab.AddToggle("fullbright / brilho", false, function(state)
     end
 end)
 
-BartTab.AddToggle("Wallhop flick Jump legit", false, function(state)
-    local Players = game:GetService("Players")
-    local Player = Players.LocalPlayer
-    local cam = workspace.CurrentCamera
-    local RunService = game:GetService("RunService")
+BartTab.AddSection("wallhop")
 
-    if not state then
-        if Player.Character then
-            Player.Character:SetAttribute("WallhopActive", false)
-        end
-        cam.CameraType = Enum.CameraType.Custom
-        return
-    end
+BartTab.AddToggle("Wallhop KeyAlign ( beta ! )", false, function(state)
+	local Players = game:GetService("Players")
+	local RunService = game:GetService("RunService")
+	local Player = Players.LocalPlayer
+	local Camera = workspace.CurrentCamera
 
-    local function setup(char)
-        if not state then return end
-        char:SetAttribute("WallhopActive", true)
+	getgenv().WallhopActive = state
 
-        local humanoid = char:WaitForChild("Humanoid")
-        local jumping = false
-        local originalCam
+	if state then
+		notify("warn", "O Wallhop é beta e pode dar erro!", 1)
+	else
+		if Player.Character then
+			Player.Character:SetAttribute("WallhopActive", false)
+		end
+		Camera.CameraType = Enum.CameraType.Custom
+		return
+	end
 
-        RunService.Heartbeat:Connect(function()
-            if not char:GetAttribute("WallhopActive") then return end
+	local function setup(char)
+		if not getgenv().WallhopActive then return end
+		char:SetAttribute("WallhopActive", true)
+		local humanoid = char:WaitForChild("Humanoid")
+		local jumping = false
+		local originalCFrame
 
-            if humanoid.Jump and not jumping then
-                jumping = true
-                originalCam = cam.CFrame
-                cam.CameraType = Enum.CameraType.Scriptable
-                cam.CFrame = originalCam * CFrame.Angles(0, math.rad(30), 0)
-            elseif not humanoid.Jump and jumping then
-                jumping = false
-                if originalCam then
-                    cam.CameraType = Enum.CameraType.Custom
-                    cam.CFrame = originalCam
-                    originalCam = nil
-                end
-            end
-        end)
-    end
+		local heartbeatConn
+		heartbeatConn = RunService.Heartbeat:Connect(function()
+			if not getgenv().WallhopActive or not char:GetAttribute("WallhopActive") then
+				if heartbeatConn then
+					heartbeatConn:Disconnect()
+				end
+				return
+			end
 
-    if Player.Character then
-        setup(Player.Character)
-    end
+			if humanoid.Jump and not jumping then
+				jumping = true
+				originalCFrame = Camera.CFrame
+				Camera.CameraType = Enum.CameraType.Scriptable
+				Camera.CFrame = originalCFrame * CFrame.Angles(0, math.rad(math.random(-40, 40)), 0)
+			elseif not humanoid.Jump and jumping then
+				jumping = false
+				if originalCFrame then
+					Camera.CFrame = originalCFrame
+					Camera.CameraType = Enum.CameraType.Custom
+					originalCFrame = nil
+				end
+			end
+		end)
+	end
 
-    -- não reativa sozinho após morrer
-    Player.CharacterAdded:Connect(function(char)
-        if Player.Character and Player.Character:FindFirstChild("Humanoid") then
-            char:SetAttribute("WallhopActive", false)
-        end
-    end)
+	if Player.Character then
+		setup(Player.Character)
+	end
+
+	Player.CharacterAdded:Connect(function(char)
+		task.wait(1)
+		if getgenv().WallhopActive then
+			setup(char)
+		else
+			char:SetAttribute("WallhopActive", false)
+		end
+	end)
 end)
 
-BartTab.AddButton("flick legit Button", function()
+BartTab.AddButton("Flick legit Button", function()
 
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
@@ -1684,18 +1716,18 @@ local Player = Players.LocalPlayer
 local PlayerGui = Player:WaitForChild("PlayerGui")
 local Camera = workspace.CurrentCamera
 
--- GUI
+--== GUI PRINCIPAL ==
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "FlickGui"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = PlayerGui
 
--- Botão Flick estilizado
+--== BOTÃO FLICK ==
 local Button = Instance.new("TextButton")
 Button.Name = "FlickButton"
-Button.Size = UDim2.new(0, 120, 0, 45)
-Button.Position = UDim2.new(0.5, -60, 0.8, 0)
-Button.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+Button.Size = UDim2.new(0, 140, 0, 50)
+Button.Position = UDim2.new(0.5, -70, 0.65, 0)
+Button.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
 Button.BorderSizePixel = 0
 Button.Text = "FLICK"
 Button.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -1704,29 +1736,48 @@ Button.TextSize = 22
 Button.AutoButtonColor = false
 Button.Parent = ScreenGui
 
--- Efeito hover visual
+local flickCorner = Instance.new("UICorner", Button)
+flickCorner.CornerRadius = UDim.new(0, 12)
+
+local flickStroke = Instance.new("UIStroke", Button)
+flickStroke.Color = Color3.fromRGB(255, 255, 255)
+flickStroke.Thickness = 0.6
+
 Button.MouseEnter:Connect(function()
-	Button.BackgroundColor3 = Color3.fromRGB(255, 70, 70)
+	Button.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
 end)
 Button.MouseLeave:Connect(function()
-	Button.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+	Button.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
 end)
 
--- Bordas arredondadas
-local UICorner = Instance.new("UICorner")
-UICorner.CornerRadius = UDim.new(0, 10)
-UICorner.Parent = Button
+--== BOTÃO LOCK ==
+local LockButton = Instance.new("TextButton")
+LockButton.Name = "LockButton"
+LockButton.Size = UDim2.new(0, 120, 0, 30)
+LockButton.Position = Button.Position + UDim2.new(0, 10, 0, 60)
+LockButton.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+LockButton.BorderSizePixel = 0
+LockButton.Text = "Lock Btn (off)"
+LockButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+LockButton.Font = Enum.Font.GothamBold
+LockButton.TextSize = 18
+LockButton.AutoButtonColor = false
+LockButton.Parent = ScreenGui
 
--- Sombra
-local UIStroke = Instance.new("UIStroke")
-UIStroke.Thickness = 0.5
-UIStroke.Color = Color3.fromRGB(255, 255, 255)
-UIStroke.Parent = Button
+local lockCorner = Instance.new("UICorner", LockButton)
+lockCorner.CornerRadius = UDim.new(0, 12)
 
--- Arrastar
+local lockStroke = Instance.new("UIStroke", LockButton)
+lockStroke.Color = Color3.fromRGB(255, 255, 255)
+lockStroke.Thickness = 1.2
+
+--== VARIÁVEL DE TRAVAMENTO ==
+local isLocked = false
+
+--== SISTEMA DE ARRASTAR ==
 local dragging, dragInput, dragStart, startPos
 Button.InputBegan:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+	if not isLocked and (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) then
 		dragging = true
 		dragStart = input.Position
 		startPos = Button.Position
@@ -1745,13 +1796,26 @@ Button.InputChanged:Connect(function(input)
 end)
 
 UserInputService.InputChanged:Connect(function(input)
-	if input == dragInput and dragging then
+	if input == dragInput and dragging and not isLocked then
 		local delta = input.Position - dragStart
 		Button.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+		LockButton.Position = Button.Position + UDim2.new(0, 10, 0, 60)
 	end
 end)
 
--- Flick leve
+--== LOCK BUTTON TOGGLE ==
+LockButton.MouseButton1Click:Connect(function()
+	isLocked = not isLocked
+	if isLocked then
+		LockButton.Text = "Lock Btn (on)"
+		LockButton.BackgroundColor3 = Color3.fromRGB(0, 200, 0)
+	else
+		LockButton.Text = "Lock Btn (off)"
+		LockButton.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+	end
+end)
+
+--== EFEITO FLICK ==
 Button.MouseButton1Click:Connect(function()
 	local hrp = Player.Character and Player.Character:FindFirstChild("HumanoidRootPart")
 	if not hrp then return end
@@ -1767,6 +1831,52 @@ Button.MouseButton1Click:Connect(function()
 end)
 
 end)
+
+BartTab.AddButton("detecte Wallhop Partes ( beta )", function()
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local LocalPlayer = Players.LocalPlayer
+
+local range = 20
+local checkInterval = 0.2
+local highlights = {}
+
+task.spawn(function()
+	while task.wait(checkInterval) do
+		local character = LocalPlayer.Character
+		if not character or not character:FindFirstChild("HumanoidRootPart") then continue end
+		local root = character.HumanoidRootPart
+
+		for _, obj in ipairs(workspace:GetDescendants()) do
+			if obj:IsA("BasePart") and not obj:IsDescendantOf(character) and not Players:GetPlayerFromCharacter(obj.Parent) then
+				local dist = (obj.Position - root.Position).Magnitude
+
+				if dist <= range then
+					if not highlights[obj] then
+						local h = Instance.new("Highlight")
+						h.Adornee = obj
+						h.FillTransparency = 1
+						h.OutlineTransparency = 0
+						h.OutlineColor = Color3.fromRGB(255, 0, 0)
+						h.Parent = obj
+						highlights[obj] = h
+					end
+				else
+					if highlights[obj] then
+						highlights[obj]:Destroy()
+						highlights[obj] = nil
+					end
+				end
+			end
+		end
+	end
+end)
+
+end)
+
+
+BartTab.AddSection("Others")
 
 BartTab.AddButton("area Segura / Safe Zone", function()
 local Players = game:GetService("Players")
@@ -2060,12 +2170,7 @@ end)
 
 local TpTab = createTab("tps")
 
-TpTab.AddButton("tp map", function()
-local pl = game.Players.LocalPlayer
-if pl.Character and pl.Character:FindFirstChild("HumanoidRootPart") then
-	pl.Character:MoveTo(Vector3.new(5, -6, -108))
-end
-end)
+
 
 TpTab.AddButton("tp 2", function()
 local pl = game.Players.LocalPlayer
@@ -2199,7 +2304,7 @@ loadstring(game:HttpGet("https://rawscripts.net/raw/Universal-Script-Wallhop-Hub
 end)
 
 
-ScriptTab.AddButton("ALL Skins  Hub onionware", function()
+ScriptTab.AddButton("Hub onionware (Skins can ban)", function()
 
 loadstring(game:HttpGet("https://rawscripts.net/raw/UPD-You-VS-Homer-Onionware-84957"))()
 
@@ -2237,7 +2342,8 @@ sugestaoTab.AddSection("novo ant cheat n deixa ")
 
 local texts = {
     "welcome",
-    "the streex He tried to raid my server. *he couldn't* LOLL",
+    "THE SKINS CAN BANNN!",
+    "the streex He tried to raid my server. *he couldn't*",
     "this its the best script!!",
     "✌️ I really see the suggestions. ",
     "DON'T TALK  * !loveyou *. you get an jumpscare",
