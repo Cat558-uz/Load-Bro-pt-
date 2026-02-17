@@ -1514,6 +1514,40 @@ end)
 
 local BartTab = createTab("Bart")
 
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local alerting = false
+local lastAlert = 0
+
+BartTab.AddToggle("Homer alerta perto", false, function(state)
+	alerting = state
+
+	if alerting then
+		task.spawn(function()
+			while alerting do
+				local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+				local hrp = char:FindFirstChild("HumanoidRootPart")
+				if hrp then
+					for _, plr in ipairs(Players:GetPlayers()) do
+						if plr ~= LocalPlayer and plr.Team and plr.Team.Name == "Homer" then
+							local targetChar = plr.Character
+							local targetHRP = targetChar and targetChar:FindFirstChild("HumanoidRootPart")
+							if targetHRP then
+								local dist = (hrp.Position - targetHRP.Position).Magnitude
+								if dist <= 18 and (time() - lastAlert) >= 5 then
+									notify("warn", plr.Name .. " (Homer) tá perto CUIDADO!", 1)
+									lastAlert = time()
+								end
+							end
+						end
+					end
+				end
+				task.wait(0.2)
+			end
+		end)
+	end
+end)
+
 BartTab.AddSection("localplayer")
 
 BartTab.AddToggle("Bang", false, function(state)
@@ -1544,13 +1578,41 @@ BartTab.AddToggle("Bang", false, function(state)
 end)
 
 
+BartTab.AddToggle("Bang fast", false, function(state)
+	local Players = game:GetService("Players")
+	local speaker = Players.LocalPlayer
+
+	if not speaker.Character then return end
+	local humanoid = speaker.Character:FindFirstChildOfClass("Humanoid")
+	if not humanoid then return end
+
+	if state then
+		-- Ativar animação R6
+		if bang then bang:Stop() end
+		if bangAnim then bangAnim:Destroy() end
+
+		bangAnim = Instance.new("Animation")
+		bangAnim.AnimationId = "rbxassetid://148840371" -- animação R6 padrão
+
+		bang = humanoid:LoadAnimation(bangAnim)
+		bang.Looped = true
+		bang:Play(0.1, 1, 1)
+		bang:AdjustSpeed(9)
+	else
+		-- Desativar animação
+		if bang then bang:Stop() bang = nil end
+		if bangAnim then bangAnim:Destroy() bangAnim = nil end
+	end
+end)
 
 
-BartTab.AddButton("pegar TP Tool", function()
+
+BartTab.AddButton(" TP Tool", function()
 
 notify("system", "bypass....")
 wait(1)
 notify("Sucesse", ".de uma olhada no inventario")
+
 
 if tptoolEquipped then return end
 tptoolEquipped = true
@@ -1568,7 +1630,28 @@ tool.Activated:Connect(function()
 	end
 end)
 
+
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+local backpack = LocalPlayer:FindFirstChild("Backpack")
+if backpack then
+	local heart = backpack:FindFirstChild("Heart")
+	if heart then
+		heart:Destroy()
+	end
+end
+
+local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+local heart = char:FindFirstChild("Heart")
+if heart then
+	heart:Destroy()
+end
+
+
 end)
+
+
 
 local UserInputService = game:GetService("UserInputService")
 local Players = game:GetService("Players")
@@ -1878,14 +1961,6 @@ end)
 
 BartTab.AddSection("Others")
 
-BartTab.AddButton("area Segura / Safe Zone", function()
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
-if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(12, 104, -10)
-end
-end)
-
 BartTab.AddToggle("flutuar", false, function(state)
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -1955,39 +2030,37 @@ end
 
 end)
 
-
-
-BartTab.AddSection("Trolagems")
-
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local spamming = false
 
-BartTab.AddToggle("Spam Equip Lantern", false, function(state)
+BartTab.AddToggle("Spam Equip Flashlight", false, function(state)
 	spamming = state
 
 	if spamming then
 		task.spawn(function()
 			while spamming do
+				local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+				local humanoid = char:FindFirstChildOfClass("Humanoid")
 				local backpack = LocalPlayer:FindFirstChild("Backpack")
-				local char = LocalPlayer.Character
-				if backpack and char then
-					local lantern = backpack:FindFirstChild("Flashlight") or char:FindFirstChild("Lantern")
+				if humanoid and backpack then
+					local lantern = backpack:FindFirstChild("Flashlight") or char:FindFirstChild("Flashlight") or backpack:FindFirstChild("Lantern") or char:FindFirstChild("Lantern")
 					if lantern then
 						if lantern.Parent == backpack then
-							char.Humanoid:EquipTool(lantern)
+							humanoid:EquipTool(lantern)
 						else
-							char.Humanoid:UnequipTools()
+							humanoid:UnequipTools()
 						end
 					end
 				end
-				task.wait(0.01)
+				task.wait(0.3)
 			end
 		end)
 	end
 end)
 
-BartTab.AddButton("Ativar todas as máquinas", function()
+
+BartTab.AddButton("ativar máquina ( money )", function()
 
     local Players = game:GetService("Players")
     local LocalPlayer = Players.LocalPlayer
@@ -2023,6 +2096,7 @@ BartTab.AddButton("Ativar todas as máquinas", function()
     hrp.CFrame = originalCFrame
 
 end)
+
 
 BartTab.AddButton("Open All Doors Bart Spaceship", function()
     local Players = game:GetService("Players")
@@ -2215,7 +2289,7 @@ end
 TpTab.AddButton("Salvar posição", salvarPosicao)
 TpTab.AddButton("Teleportar para posição salva", tpPosicaoSalva)
 
-TpTab.AddSection("spoots")
+TpTab.AddSection("more Tp")
 
 TpTab.AddButton("Tp to an Bart", function()
 local Players = game:GetService("Players")
@@ -2257,37 +2331,280 @@ TpTab.AddButton("Tp to an Homer", function()
     end
 end)
 
-TpTab.AddButton("esconderijo Simpsons", function()
-local pl = game.Players.LocalPlayer
-if pl.Character and pl.Character:FindFirstChild("HumanoidRootPart") then
-	pl.Character:MoveTo(Vector3.new(47, -60, -97))
-end
-end)
 
-TpTab.AddButton("esconderijo 2 Simpsons", function()
-local pl = game.Players.LocalPlayer
+TpTab.AddButton("Tp to Homer rooms", function()
+    
+    
+    local pl = game.Players.LocalPlayer
 if pl.Character and pl.Character:FindFirstChild("HumanoidRootPart") then
-	pl.Character:MoveTo(Vector3.new(73, -80, -1))
+	pl.Character:MoveTo(Vector3.new(4994, 98, 5002))
 end
-end)
-
-TpTab.AddButton("esconderijo island bar", function()
-local pl = game.Players.LocalPlayer
-if pl.Character and pl.Character:FindFirstChild("HumanoidRootPart") then
-	pl.Character:MoveTo(Vector3.new(-48, -114, -42))
-end
-end)
-
-TpTab.AddButton("esconderijo 2 Island bar", function()
-local pl = game.Players.LocalPlayer
-if pl.Character and pl.Character:FindFirstChild("HumanoidRootPart") then
-	pl.Character:MoveTo(Vector3.new(54, -55, -57))
-end
+    
 end)
 
 
+local CTab = createTab("Customize")
+
+CTab.AddSection("coloque seu id para funcionar")
+
+CTab.AddSection("ele já e salvo só dar enter ou < no celular/Pc ")
+
+CTab.AddSection("após reexecutar só apertar para ativar ")
 
 
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local Camera = workspace.CurrentCamera
+local LocalPlayer = Players.LocalPlayer
+
+local folderName = "GhostData"
+local fileName = folderName .. "/ImageID.txt"
+local defaultId = "134500387577754"
+
+if not isfolder(folderName) then
+	makefolder(folderName)
+end
+
+local function saveImageId(id)
+	writefile(fileName, tostring(id))
+end
+
+local function loadImageId()
+	if isfile(fileName) then
+		local content = readfile(fileName)
+		if content and content ~= "" then
+			return content
+		end
+	end
+	return defaultId
+end
+
+local currentId = loadImageId()
+local imgGui
+local renderConn
+local isEnabled = false
+
+local function setCharacterVisible(state)
+	local char = LocalPlayer.Character
+	if not char then return end
+	for _, v in ipairs(char:GetDescendants()) do
+		if v:IsA("BasePart") then
+			v.Transparency = state and 0 or 1
+		end
+	end
+end
+
+local function createBillboard()
+	local char = LocalPlayer.Character
+	if not char then return end
+	local hrp = char:WaitForChild("HumanoidRootPart")
+
+	imgGui = Instance.new("BillboardGui")
+	imgGui.Name = "CamImage"
+	imgGui.Parent = hrp
+	imgGui.Adornee = hrp
+	imgGui.Size = UDim2.new(6, 0, 6, 0)
+	imgGui.AlwaysOnTop = false
+	imgGui.LightInfluence = 1
+	imgGui.StudsOffset = Vector3.new(0, 1.2, 0)
+
+	local img = Instance.new("ImageLabel")
+	img.Parent = imgGui
+	img.Size = UDim2.new(1, 0, 1, 0)
+	img.BackgroundTransparency = 1
+	img.Image = "rbxassetid://" .. currentId
+
+	renderConn = RunService.RenderStepped:Connect(function()
+		if not imgGui or not hrp then return end
+		local camPos = Camera.CFrame.Position
+		local hrpPos = hrp.Position
+		local params = RaycastParams.new()
+		params.FilterDescendantsInstances = { LocalPlayer.Character }
+		params.FilterType = Enum.RaycastFilterType.Blacklist
+		params.IgnoreWater = true
+		local result = workspace:Raycast(camPos, hrpPos - camPos, params)
+		imgGui.Enabled = result == nil
+	end)
+end
+
+local function removeBillboard()
+	if renderConn then
+		renderConn:Disconnect()
+		renderConn = nil
+	end
+	if imgGui then
+		imgGui:Destroy()
+		imgGui = nil
+	end
+end
+
+CTab.AddToggle("active skin customized", false, function(state)
+	if state then
+		task.wait(0.1)
+		local team = LocalPlayer.Team and LocalPlayer.Team.Name
+		if team == "Bart" or team == "Barts" then
+			isEnabled = true
+			setCharacterVisible(false)
+			createBillboard()
+			notify("System", "Imagem adicionada (ID: " .. currentId .. ")", 1)
+		else
+			notify("System", "Você precisa estar no time Bart ou Barts", 5)
+		end
+	else
+		isEnabled = false
+		removeBillboard()
+		setCharacterVisible(true)
+		notify("System", "ativado", 1)
+	end
+end)
+
+CTab.AddTextBox("Coloque o ID da imagem", function(value)
+	if value and value ~= "" then
+		currentId = tostring(value)
+		saveImageId(currentId)
+		notify("System", "ID salvo: " .. currentId, 1)
+	else
+		currentId = defaultId
+		saveImageId(currentId)
+		notify("System", "Usando ID padrao ", 1)
+	end
+end)
+
+CTab.AddSection("Walk animation")
+
+CTab.AddSection("ative na partida")
+
+CTab.AddSection("o primeiro a animacao parada")
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local Camera = workspace.CurrentCamera
+local LocalPlayer = Players.LocalPlayer
+
+local folderName = "GhostData"
+local fileName = folderName .. "/AnimatedImageIDs.txt" -- arquivo salvo com nome diferente
+
+if not isfolder(folderName) then
+	makefolder(folderName)
+end
+
+local function saveIDs(ids)
+	writefile(fileName, table.concat(ids, ","))
+end
+
+local function loadIDs()
+	if isfile(fileName) then
+		local content = readfile(fileName)
+		local list = {}
+		for id in string.gmatch(content, "([^,]+)") do
+			table.insert(list, id)
+		end
+		return list
+	end
+	return {"134500387577754","134500387577754","134500387577754","134500387577754","134500387577754"}
+end
+
+local imageIDs = loadIDs()
+local imgGui
+local renderConn
+local animConn
+local isActive = false
+local isMoving = false
+local currentIndex = 1
+
+local function createBillboard(id)
+	local char = LocalPlayer.Character
+	if not char then return end
+	local hrp = char:WaitForChild("HumanoidRootPart")
+
+	if imgGui then imgGui:Destroy() end
+
+	imgGui = Instance.new("BillboardGui")
+	imgGui.Name = "CamImage"
+	imgGui.Parent = hrp
+	imgGui.Adornee = hrp
+	imgGui.Size = UDim2.new(6, 0, 6, 0)
+	imgGui.AlwaysOnTop = false
+	imgGui.LightInfluence = 1
+	imgGui.StudsOffset = Vector3.new(0, 1.2, 0)
+
+	local img = Instance.new("ImageLabel")
+	img.Parent = imgGui
+	img.Size = UDim2.new(1, 0, 1, 0)
+	img.BackgroundTransparency = 1
+	img.Image = "rbxassetid://" .. tostring(id)
+
+	if renderConn then renderConn:Disconnect() end
+	renderConn = RunService.RenderStepped:Connect(function()
+		if not imgGui or not hrp then return end
+		local camPos = Camera.CFrame.Position
+		local hrpPos = hrp.Position
+		local params = RaycastParams.new()
+		params.FilterDescendantsInstances = {LocalPlayer.Character}
+		params.FilterType = Enum.RaycastFilterType.Blacklist
+		params.IgnoreWater = true
+		local result = workspace:Raycast(camPos, hrpPos - camPos, params)
+		imgGui.Enabled = result == nil
+	end)
+end
+
+local function animateImages()
+	while isActive do
+		if isMoving then
+			for i = 1, #imageIDs do
+				if not isActive or not isMoving then break end
+				createBillboard(imageIDs[i])
+				task.wait(0.3)
+			end
+		end
+		task.wait(0.05)
+	end
+end
+
+UserInputService.InputBegan:Connect(function(input, gpe)
+	if gpe then return end
+	if input.UserInputType == Enum.UserInputType.Keyboard or input.UserInputType == Enum.UserInputType.Touch then
+		isMoving = true
+	end
+end)
+
+UserInputService.InputEnded:Connect(function(input, gpe)
+	if gpe then return end
+	if input.UserInputType == Enum.UserInputType.Keyboard or input.UserInputType == Enum.UserInputType.Touch then
+		isMoving = false
+	end
+end)
+
+CTab.AddToggle("Active Animation Walk", false, function(state)
+	if state then
+		local team = LocalPlayer.Team and LocalPlayer.Team.Name
+		if team == "Bart" or team == "Barts" then
+			isActive = true
+			currentIndex = 1
+			createBillboard(imageIDs[currentIndex])
+			task.spawn(animateImages)
+			notify("System", "Animação de imagens ativada", 1)
+		else
+			notify("System", "Você precisa estar no time Bart ou Barts", 2)
+		end
+	else
+		isActive = false
+		if renderConn then renderConn:Disconnect() end
+		if imgGui then imgGui:Destroy() end
+		notify("System", "Animação desativada", 1)
+	end
+end)
+
+for i = 1, 5 do
+	CTab.AddTextBox("ID " .. i, function(value)
+		if value and value ~= "" then
+			imageIDs[i] = tostring(value)
+			saveIDs(imageIDs)
+			notify("System", "ID " .. i .. " salvo: " .. value, 1)
+		end
+	end)
+end
 
 local ScriptTab = createTab("Script")
  
