@@ -2343,7 +2343,9 @@ end
 end)
 
 
-local CTab = createTab("Customize")
+local CTab = createTab("Customize sk")
+
+CTab.AddSection("SKIN 2D")
 
 CTab.AddSection("coloque seu id para funcionar")
 
@@ -2470,7 +2472,7 @@ CTab.AddTextBox("Coloque o ID da imagem", function(value)
 	end
 end)
 
-CTab.AddSection("Walk animation")
+CTab.AddSection("WALK ANIMATION")
 
 CTab.AddSection("ative na partida")
 
@@ -2581,6 +2583,17 @@ CTab.AddToggle("Active Animation Walk", false, function(state)
 		local team = LocalPlayer.Team and LocalPlayer.Team.Name
 		if team == "Bart" or team == "Barts" then
 			isActive = true
+
+			-- Deixa o player invisível
+			local char = LocalPlayer.Character
+			if char then
+				for _, part in ipairs(char:GetDescendants()) do
+					if part:IsA("BasePart") or part:IsA("Decal") then
+						part.Transparency = 1
+					end
+				end
+			end
+
 			currentIndex = 1
 			createBillboard(imageIDs[currentIndex])
 			task.spawn(animateImages)
@@ -2590,6 +2603,17 @@ CTab.AddToggle("Active Animation Walk", false, function(state)
 		end
 	else
 		isActive = false
+
+		-- Restaura a visibilidade do player
+		local char = LocalPlayer.Character
+		if char then
+			for _, part in ipairs(char:GetDescendants()) do
+				if part:IsA("BasePart") or part:IsA("Decal") then
+					part.Transparency = 0
+				end
+			end
+		end
+
 		if renderConn then renderConn:Disconnect() end
 		if imgGui then imgGui:Destroy() end
 		notify("System", "Animação desativada", 1)
