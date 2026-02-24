@@ -2625,23 +2625,19 @@ loadstring(game:HttpGet("https://rawscripts.net/raw/Universal-Script-Super-ring-
 
 end)
 
-local sugestaoTab = createTab("sugestions")
+local ceTab = createTab("credits")
 
+ceTab.AddSection("by kit_cynALT ")
 
+ceTab.AddButton("Copy server discord", function()
 
-sugestaoTab.AddButton("carregar sugestões ", function()
-
-loadstring(game:HttpGet("https://raw.githubusercontent.com/Cat558-uz/Ed-Sugestion/refs/heads/main/sugestao.lua.obfuscated.lua.txt"))()
+local link = "https://discord.gg/JBhJ5JeAcm"
+if setclipboard then
+	pcall(setclipboard, link)
+end
 
 end)
 
-sugestaoTab.AddSection("aviso ")
-
-sugestaoTab.AddSection("n coloco ideias que n der ")
-
-sugestaoTab.AddSection("como Admin ou fly  ")
-
-sugestaoTab.AddSection("novo ant cheat n deixa ")
 
 local normalTexts = {
     "Havens Hub | you vs homer | by Ghost"
