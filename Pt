@@ -372,26 +372,42 @@ local function createTab(name)
 	end
 
 	local function AddTextBox(placeholder, callback)
-		elementIndex = elementIndex + 1
-		local box = Instance.new("TextBox", TabContent)
-		box.Size = UDim2.new(1, -10, 0, 30)
-		box.BackgroundColor3 = Color3.fromRGB(60, 0, 0)
-		box.PlaceholderText = placeholder
-		box.Text = ""
-		box.TextColor3 = Color3.new(1, 1, 1)
-		box.Font = Enum.Font.SourceSans
-		box.TextSize = 18
-		Instance.new("UICorner", box).CornerRadius = UDim.new(0, 8)
-		box.LayoutOrder = elementIndex
-		local boxClick = addClickAnim(box)
-		box.FocusLost:Connect(function(enter)
-			if enter then
+	elementIndex = elementIndex + 1
+
+	local box = Instance.new("TextBox")
+	box.Parent = TabContent
+	box.Size = UDim2.new(1, -10, 0, 30)
+	box.BackgroundColor3 = Color3.fromRGB(60, 0, 0)
+	box.PlaceholderText = placeholder
+	box.Text = ""
+	box.TextColor3 = Color3.new(1, 1, 1)
+	box.Font = Enum.Font.SourceSans
+	box.TextSize = 18
+
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(0, 8)
+	corner.Parent = box
+
+	box.LayoutOrder = elementIndex
+
+	local boxClick = addClickAnim(box)
+
+	-- Debounce simples para evitar chamar callback a cada caractere
+	local lastChange = tick()
+	local debounceTime = 0.3 -- tempo em segundos
+
+	box:GetPropertyChangedSignal("Text"):Connect(function()
+		lastChange = tick()
+		task.delay(debounceTime, function()
+			if tick() - lastChange >= debounceTime then
 				boxClick()
 				pcall(callback, box.Text)
 			end
 		end)
-		return box
-	end
+	end)
+
+	return box
+end
 
 	return {
 		AddSection = AddSection,
@@ -436,7 +452,96 @@ fireclickdetector(clickDetector)
 end)
 
 
-ConfigTab.AddSection("configs")
+ConfigTab.AddSection("config your Hub ")
+
+ConfigTab.AddToggle("Custom Titlers", false, function(state)
+    -- Inicializa variáveis de controle se não existirem
+    getgenv().CustomTitlersRunning = state
+    
+    if state then
+        -- Cria um ID único para esta ativação
+        local threadID = tick()
+        getgenv().CurrentTitlerID = threadID
+
+        getgenv().CustomTitlersThread = task.spawn(function()
+            local normalTexts = {"Havens Hub | you vs homer | by Ghost"}
+            local mediumTexts = {"Hii", "Wow", "Bro give me an hot dog", "Im Not english 🥀🙏", "Im From Brazil🙏", "Get out", "You get ban ! ( Joking )", "GIVE ME YOURS QUIZSS", "u know the owner can see you", "Im have Discord", "I am 67 years", "I sold my legs to Fortnite", "Skins its free", "Free robux say . !iloveyou", "If you say !iloveyou yu get robux", "Say L for toxics", "Report toxics"}
+            local rareTexts = {": ]", ": (", ">: (", "I hate you", ":/", ": ( )", ": l", "^-^", ";-;", "Uwu 🙏🥀", "GIVE ME AN HOT DOT >: <"}
+            local musicTexts1 = {"playing old music meme🎵", "Never gonna give you up🎵🎵", "Never gonna let you down🎵", "Never gonna run around and desert you🎵🎵", "Never gonna make you cry🎵", "Never gonna say goodbye🎵", "Never gonna tell a lie and hurt you🎵🎵🎵"}
+            local musicTexts2 = {"playing Night Mail -", "This is the nightmail crossing the border", "Bringing the cheque and the postal order", "Letters for the rich, letters for the poor", "The shop at the corner, the girl next door", "End*"}
+
+            -- Função de escrita interna com verificação de segurança
+            local function WriteText(text)
+                SetTitle("")
+                for i = 1, #text do
+                    -- Verifica se a thread ainda é a "dona" da execução ou se foi desligada
+                    if getgenv().CurrentTitlerID ~= threadID or not getgenv().CustomTitlersRunning then 
+                        return false 
+                    end
+                    
+                    local char = string.sub(text, i, i)
+                    -- Otimização: evita concatenar strings se não houver mudança
+                    SetTitle(string.sub(text, 1, i)) 
+                    task.wait(0.08) -- Um pouco mais rápido para parecer fluido
+                end
+                return true
+            end
+
+            -- Loop Principal
+            while getgenv().CustomTitlersRunning and getgenv().CurrentTitlerID == threadID do
+                -- 1. Normal Texts
+                for _, t in ipairs(normalTexts) do
+                    if not WriteText(t) then break end
+                    task.wait(2)
+                end
+
+                if getgenv().CurrentTitlerID ~= threadID then break end
+
+                -- 2. Medium Texts (Chance de 50%)
+                if math.random() < 0.5 then
+                    local t = mediumTexts[math.random(1, #mediumTexts)]
+                    if not WriteText(t) then break end
+                    task.wait(2)
+                end
+
+                -- 3. Rare Texts (Chance de 10%)
+                if math.random() < 0.1 then
+                    local t = rareTexts[math.random(1, #rareTexts)]
+                    if not WriteText(t) then break end
+                    task.wait(2)
+                end
+
+                -- 4. Music (Chance de 10%)
+                if math.random() < 0.1 then
+                    local list = (math.random() < 0.5) and musicTexts1 or musicTexts2
+                    for _, t in ipairs(list) do
+                        if not WriteText(t) then break end
+                        task.wait(1.5)
+                    end
+                end
+                
+                task.wait(0.1)
+            end
+        end)
+    else
+        -- Desliga e reseta o título
+        getgenv().CustomTitlersRunning = false
+        getgenv().CurrentTitlerID = nil
+        SetTitle("Havens Hub | you vs homer < ")
+    end
+end)
+
+ConfigTab.AddButton("Reset Your Language file ", function()
+
+local langFile = "LangSelect.txt"
+
+if isfile and isfile(langFile) then
+	delfile(langFile)
+end
+
+end)
+
+ConfigTab.AddSection("gaming / status")
 
 ConfigTab.AddButton("ver FPS", function()
 local RunService = game:GetService("RunService")
@@ -2310,9 +2415,7 @@ CTab.AddSection("SKIN 2D")
 
 CTab.AddSection("coloque seu id para funcionar")
 
-CTab.AddSection("ele já e salvo só dar enter ou < no celular/Pc ")
-
-CTab.AddSection("após reexecutar só apertar para ativar ")
+CTab.AddSection("ele já e salvo só usar dps só ativar ")
 
 
 local Players = game:GetService("Players")
@@ -2405,19 +2508,19 @@ CTab.AddToggle("active skin customized", false, function(state)
 	if state then
 		task.wait(0.1)
 		local team = LocalPlayer.Team and LocalPlayer.Team.Name
-		if team == "Bart" or team == "Barts" then
+		if team == "Bart" or team == "Homer" then
 			isEnabled = true
 			setCharacterVisible(false)
 			createBillboard()
-			notify("System", "Imagem adicionada (ID: " .. currentId .. ")", 1)
+			notify("System", "Imagem adicionada (ID: " .. currentId .. ")", 3)
 		else
-			notify("System", "Você precisa estar no time Bart ou Barts", 5)
+			notify("System", "Você precisa estar no time Bart ou homer", 5)
 		end
 	else
 		isEnabled = false
 		removeBillboard()
 		setCharacterVisible(true)
-		notify("System", "ativado", 1)
+		notify("System", "ativado", 3)
 	end
 end)
 
@@ -2425,7 +2528,7 @@ CTab.AddTextBox("Coloque o ID da imagem", function(value)
 	if value and value ~= "" then
 		currentId = tostring(value)
 		saveImageId(currentId)
-		notify("System", "ID salvo: " .. currentId, 1)
+		notify("System", "ID salvo: " .. currentId, 3)
 	else
 		currentId = defaultId
 		saveImageId(currentId)
@@ -2619,6 +2722,12 @@ loadstring(game:HttpGet("https://rawscripts.net/raw/You-VS-Homer-Bartender-78034
 
 end)
 
+ScriptTab.AddButton("unlock ALL Skins ( visual + no equip )", function()
+
+loadstring(game:HttpGet("https://rawscripts.net/raw/100M!-You-VS-Homer-Unlock-all-Skin-Open-source-119630"))()
+
+end)
+
 ScriptTab.AddButton("Destroy THE SERVER", function()
 
 loadstring(game:HttpGet("https://rawscripts.net/raw/Universal-Script-Super-ring-parts-Modified-105975"))()
@@ -2639,113 +2748,3 @@ end
 end)
 
 
-local normalTexts = {
-    "Havens Hub | you vs homer | by Ghost"
-}
-
-local mediumTexts = {
-    "Hii",
-    "Wow",
-    "Bro give me an hot dog",
-    "Im Not english 🥀🙏",
-    "Im From Brazil🙏",
-    "Get out",
-    "You get ban ! ( Joking )",
-    "GIVE ME YOURS QUIZSS",
-    "u know the owner can see you",
-    "Im have Discord",
-    "I am 67 years",
-    "I sold my legs to Fortnite",
-    "Skins its free",
-    "Free robux say . !iloveyou",
-    "If you say !iloveyou yu get robux",
-    "Say L for toxics",
-    "Report toxics"
-}
-
-local rareTexts = {
-    ": ]",
-    ": (",
-    ">: (",
-    "I hate you",
-    ":/",
-    ": ( )",
-    ": l",
-    "^-^",
-    ";-;",
-    "Uwu 🙏🥀",
-    "GIVE ME AN HOT DOT >: <"
-}
-
-local musicTexts1 = {
-    "playing old music meme🎵",
-    "Never gonna give you up🎵🎵",
-    "Never gonna let you down🎵",
-    "Never gonna run around and desert you🎵🎵",
-    "Never gonna make you cry🎵",
-    "Never gonna say goodbye🎵",
-    "Never gonna tell a lie and hurt you🎵🎵🎵"
-}
-
-local musicTexts2 = {
-    "playing Night Mail -",
-    "This is the nightmail crossing the border",
-    "Bringing the cheque and the postal order",
-    "Letters for the rich, letters for the poor",
-    "The shop at the corner, the girl next door",
-    "End*"
-}
-
-local function WriteText(text)
-    SetTitle("")
-    for i = 1, #text do
-        local char = string.sub(text, i, i)
-        if i == 1 then char = string.upper(char) end
-        SetTitle(Title.Text .. char)
-        wait(0.1)
-    end
-end
-
-local function PlayMusicText(text)
-    SetTitle("")
-    for i = 1, #text do
-        local char = string.sub(text, i, i)
-        if i == 1 then char = string.upper(char) end
-        SetTitle(Title.Text .. char)
-        wait(0.1)
-    end
-end
-
-while true do
-    for _, t in ipairs(normalTexts) do
-        WriteText(t)
-        wait(2)
-    end
-
-    for _, t in ipairs(mediumTexts) do
-        if math.random() < 0.5 then
-            WriteText(t)
-            wait(2)
-        end
-    end
-
-    for _, t in ipairs(rareTexts) do
-        if math.random() < 0.1 then
-            WriteText(t)
-            wait(2)
-        end
-    end
-
-    if math.random() < 0.1 then
-        if math.random() < 0.5 then
-            local t = musicTexts1[math.random(1, #musicTexts1)]
-            PlayMusicText(t)
-        else
-            local t = musicTexts2[math.random(1, #musicTexts2)]
-            PlayMusicText(t)
-        end
-        wait(2)
-    end
-
-    SetTitle("")
-end
